@@ -41,7 +41,9 @@ EXTRA_PATH_METADATA = {
 }
 #from pelican.plugins import related_posts
 PLUGIN_PATHS = ['../pelican-plugins']
-PLUGINS = ['assets', 'sitemap', 'gravatar','rmd_reader']
+PLUGINS = ['gravatar','rmd_reader']
+#'assets', 'sitemap',
+
 
 # Specify theme
 THEME = "../pelican-themes/pelican-chunk"
