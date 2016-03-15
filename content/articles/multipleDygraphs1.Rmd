@@ -21,7 +21,11 @@ opts_chunk$set(fig.path='../content/figure/',echo=TRUE, warning=TRUE, message=TR
 opts_chunk$set(pelican.publish=FALSE)
 
 
-# It took me a second to figure out pelican.publish=TRUE. #If you're writing in RStudio and want to see local output, #set that to FALSE. But if you are ready to run pelican #content and publish to the web, that should be TRUE.
+# It took me a second to figure out pelican.publish=TRUE. 
+#If you're writing in RStudio and want to see local output, set that to FALSE. 
+#But if you are ready to run pelican 
+#content and publish to the web, that should be TRUE. And path is different
+#opts_chunk$set(fig.path='../figure/',echo=TRUE, warning=TRUE, message=TRUE)
 ```
 
 This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
