@@ -97,9 +97,8 @@ def publish():
     local('pelican content -o output -s pelicanconf.py')
     local('ghp-import output')
     local('git push git@github.com:nikak/nikak.github.io.git gh-pages:master')
-    local('cd /Users/nk/Documents/devPro/conda/pelican/nikak.github.io')
-    local('git pull origin master')
-    local('cd /Users/nk/Documents/devPro/conda/pelican/motion-src')
+    with cd('/Users/nk/Documents/devPro/conda/pelican/nikak.github.io'):
+        local('git pull origin master')
 
 
 
