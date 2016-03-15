@@ -34,7 +34,7 @@ DEFAULT_PAGINATION = 12
 # Uncomment following line if you want document-relative URLs when developing
 RELATIVE_URLS = True
 
-STATIC_PATHS = ['images', 'extra/robots.txt', 'extra/favicon.ico']
+STATIC_PATHS = ['images', 'figure','extra/robots.txt', 'extra/favicon.ico']
 EXTRA_PATH_METADATA = {
     'extra/robots.txt': {'path': 'robots.txt'},
     'extra/favicon.ico': {'path': 'favicon.ico'}
@@ -49,3 +49,9 @@ PLUGINS = ['gravatar','rmd_reader']
 THEME = "../pelican-themes/pelican-chunk"
 #blue-penguin bootstrap pelican-chunk
 
+RMD_READER_CLEANUP = True
+#RMD_READER_KNITR_QUIET = True
+RMD_READER_KNITR_ENCODING = 'UTF-8'
+RMD_READER_KNITR_OPTS_CHUNK = None
+
+MARKUP = ('md', 'ipynb', 'rmd')
