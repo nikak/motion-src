@@ -22,15 +22,16 @@ knit_hooks$set(plot=function(x, options) {
 #if we are in Pelican and use Pelican 'build' OR 'regenerate'? to generate local html file 
 #in the 'same'output' directory of our Pelican-website uncomment this 2 lines 
 #and comment two lines at the end of section
-# opts_chunk$set(fig.path='../content/figure/',echo=TRUE, warning=TRUE, message=TRUE)
-# opts_chunk$set(pelican.publish=FALSE)
+#opts_chunk$set(fig.path='../content/figure/',echo=TRUE, warning=TRUE, message=TRUE)
+opts_chunk$set(fig.path='../figureR/',echo=FALSE, warning=FALSE, message=FALSE)
+opts_chunk$set(pelican.publish=FALSE)
 
 
-#If you're writing in RStudio and want to see local output, set pelican.publish to FALSE. 
+#I think only if you had SSH and fab publish is working
 #But if you are ready to run pelican content and publish to the web, that should be TRUE. 
 #And figure path is different
-opts_chunk$set(fig.path='../output/figure/',echo=TRUE, warning=TRUE, message=TRUE)
-opts_chunk$set(pelican.publish=TRUE)
+#opts_chunk$set(fig.path='../output/figure/',echo=TRUE, warning=TRUE, message=TRUE)
+#opts_chunk$set(pelican.publish=TRUE)
 
 ```
 
