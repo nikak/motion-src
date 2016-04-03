@@ -1,5 +1,6 @@
 cache/
 output/
+figureR/
 *.pyc
 
 # Byte-compiled / optimized / DLL files
