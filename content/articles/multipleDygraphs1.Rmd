@@ -29,7 +29,7 @@ knit_hooks$set(plot=function(x, options) {
 #If you're writing in RStudio and want to see local output, set pelican.publish to FALSE. 
 #But if you are ready to run pelican content and publish to the web, that should be TRUE. 
 #And figure path is different
-opts_chunk$set(fig.path='../figure/',echo=TRUE, warning=TRUE, message=TRUE)
+opts_chunk$set(fig.path='../output/figure/',echo=TRUE, warning=TRUE, message=TRUE)
 opts_chunk$set(pelican.publish=TRUE)
 
 ```
