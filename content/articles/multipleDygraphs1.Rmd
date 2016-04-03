@@ -51,6 +51,9 @@ plot(cars)
 
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R **code** that generated the plot.
 
+[To dygraph2](../staticR/multipleDygraphs2.html)
+
+
 --------------------------
 ***ok*, that is bold**
 >and that will be a quote
