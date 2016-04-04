@@ -1,14 +1,14 @@
 ---
-Title: Multiple dygraphs1 head
+Title: Multiple dygraphs2 head
 Date: 2010-12-03 10:20
 Modified: 2010-12-05 19:30
-Category: Test
+Category: Test2
 Tags: pelican, publishing
-Slug: multiple-dygraphs1-head
+Slug: multiple-dygraphs2-head
 Authors: Nicolek
 Summary: Short version for index and feeds
 Series: Summary Stats
-  series_index: 1
+  series_index: 3
 output: 
   html_document: 
     theme: readable

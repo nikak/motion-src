@@ -34,20 +34,30 @@ DEFAULT_PAGINATION = 12
 # Uncomment following line if you want document-relative URLs when developing
 RELATIVE_URLS = True
 
-STATIC_PATHS = ['images', 'figure','extra/robots.txt', 'extra/favicon.ico']
+STATIC_PATHS = ['docs','static', 'images', 'figure','extra/robots.txt', 'extra/favicon.ico', 'extra/static/rStyle.css']
 EXTRA_PATH_METADATA = {
     'extra/robots.txt': {'path': 'robots.txt'},
-    'extra/favicon.ico': {'path': 'favicon.ico'}
+    'extra/favicon.ico': {'path': 'favicon.ico'},
+    'extra/static/rStyle.css': {'path': 'static/rStyle.css'}
 }
 #from pelican.plugins import related_posts
 PLUGIN_PATHS = ['../pelican-plugins']
-PLUGINS = ['gravatar','rmd_reader']
+PLUGINS = ['gravatar','rmd_reader','series','liquid_tags','tag_cloud', 'tipue_search']
 #'assets', 'sitemap',
 
 
 # Specify theme
-THEME = "../pelican-themes/pelican-chunk"
+THEME = "../pelican-themes/bootstrap3"
 #blue-penguin bootstrap pelican-chunk
+#what follows is bootstrap3 specific
+BOOTSTRAP_THEME ='readable'
+CUSTOM_CSS = 'static/rStyle.css'
+PYGMENTS_STYLE = 'solarizedlight'
+FAVICON = 'favicon.ico'
+SHOW_SERIES = True
+DISPLAY_SERIES_ON_SIDEBAR = False
+DISPLAY_CATEGORIES_ON_SIDEBAR  = True
+
 
 RMD_READER_CLEANUP = True
 #RMD_READER_KNITR_QUIET = True

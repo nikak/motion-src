@@ -1,0 +1,36 @@
+
+
+div.dygraphs.html-widget-static-bound{
+float: left !important;
+width: 50% !important;
+margin-bottom: 25px !important;
+padding-top: 15px;
+
+background-color: white;
+border-color: rgb(61, 79, 111);
+border-style: solid;
+border-width: 4px;
+
+/*
+margin-top: 25px !important;
+padding-bottom: 15px;*/
+}
+
+div.dyLabels {
+float: left !important;
+width: 50% !important;
+margin: 9px 0px !important;
+padding: 10px;
+border-left: 9px solid #3D4F6F !important;
+/*min-height: 10.3em;*/
+}
+.clearfix:after {
+   content: " "; /* Older browser do not support empty content */
+   visibility: hidden;
+   display: block;
+   height: 0;
+   clear: both;
+}
+div.dygraphs.html-widget-static-bound div{
+/*float: left !important;*/
+}

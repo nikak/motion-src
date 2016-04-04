@@ -1,0 +1,147 @@
+/*
+Theme Name: Motion-finder
+Author: Nikak
+Author URI: http://nikak.github.io/
+Description: A modified bootstrap3 theme designed by David Goodger 
+Version: 1.0-mf
+Tags: light, white, rtl-language-support, sticky-post, translation-ready, art, blog, journal, lifestream, bright, clean, contemporary, flamboyant, modern
+*/
+
+/*@import url("googleOswald.css");*/
+
+/* =Base
+----------------------------------------------- */
+body {
+	background-color: #fdfaf9 !important;
+	color: #555;
+}
+body h3,h4{
+	color: #777;
+}
+body h1,h2{
+	color: #666;
+}
+/* =Header
+----------------------------------------------- */
+a.navbar-brand {
+	color: #666 !important;
+	font-family: 'Oswald', Helvetica, Arial, sans-serif;
+	font-size: 18px;
+	letter-spacing: 1px;
+	line-height: 2.1em;
+	margin: 0 10px;
+	text-decoration: none;
+	text-transform: uppercase;
+}
+a.navbar-brand:hover {
+	color: #000 !important;
+}
+
+
+/* =Menu
+----------------------------------------------- */
+.nav.navbar-nav .active a{
+	color: #666 !important;
+	text-decoration: none;
+	border-bottom-color: #888 !important;
+	/*cursor: default !important;
+	color: #000 !important;*/
+}
+
+.nav.navbar-nav a {
+	color: #666 !important;
+	text-decoration: none;
+	border-color: #fff !important;
+	border-radius: 0;
+	-webkit-border-radius: 0px;
+	-moz-border-radius: 0px;
+	border-style: dotted;
+	border-width: 1px !important;
+	padding: 0px 0px  !important;
+    margin-top: 20px  !important;
+}
+
+.nav.navbar-nav a:hover {
+	color: #000 !important;
+	text-decoration: none;
+	border-style: dotted;
+	border-bottom-color: #888 !important;
+}
+
+#tipue_search_input {
+	margin-top: 10px;
+	-webkit-border-radius: 6px;
+	-moz-border-radius: 6px;
+	border-radius: 6px;
+}
+
+/* =Sidebar
+----------------------------------------------- */
+.well-sm {
+	margin-top: 10px;
+	-webkit-border-radius: 0px;
+	-moz-border-radius: 0px;
+	border-radius: 0px;
+}
+
+.well-sm.well, #sidebar .list-group, #sidebar .list-group-item, #sidebar .list-group-item h4, #sidebar .list-group-item i{
+	background-color: #fff;
+	font-size: 1em;
+}
+#sidebar .well-sm.well .list-group{
+	color: #777;
+}
+#sidebar .list-group-item i{
+	vertical-align: 0;
+}
+
+/* =Content
+----------------------------------------------- */
+body div.container h1 a, body div.container h2 a,
+body div.container h3 a, body div.container h4 a,
+body div.container h5 a, body div.container h6 a {
+	text-decoration: none;
+}
+
+body div.container * a:hover {
+	color: #ff7200; /*#36bcab;*/
+}
+
+blockquote {
+	background: #fff;
+	border-left: 10px solid #ff7200;
+	color: #767676;
+	text-align: justify;
+	/*padding: 10px;
+	font-family: Georgia, Arial, Helvetica, sans-serif;
+	font-size: 15px;*/
+}
+
+img:not(.dygraph-rangesel-zoomhandle) {
+    vertical-align: middle;
+    background: white;
+    padding: 6px;
+    border-color: #ccc;
+    border-style: dotted;
+    border-width: 1px;
+    margin: 5px;
+}
+/* =Google font
+----------------------------------------------- */
+/* latin-ext */
+@font-face {
+  font-family: 'Oswald';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Oswald Regular'), local('Oswald-Regular'), url(http://fonts.gstatic.com/s/oswald/v10/Qw6_9HvXRQGg5mMbFR3Phn-_kf6ByYO6CLYdB4HQE-Y.woff2) format('woff2');
+  unicode-range: U+0100-024F, U+1E00-1EFF, U+20A0-20AB, U+20AD-20CF, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Oswald';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Oswald Regular'), local('Oswald-Regular'), url(http://fonts.gstatic.com/s/oswald/v10/_P8jt3Y65hJ9c4AzRE0V1OvvDin1pK8aKteLpeZ5c0A.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2212, U+2215, U+E0FF, U+EFFD, U+F000;
+}
+
