@@ -1,0 +1,115 @@
+---
+Title: With loading head
+Date: 2010-12-03 10:20
+Modified: '`r format(Sys.Date(), "%B %d, %Y")`'
+Category: Test2
+Menulabel: Project
+Tags: pelican, publishing
+Slug: With-loading-head
+Authors: Nicolek
+Summary: Short version for index and feeds
+Series: Summary Stats
+series_index: 4
+output: 
+  html_document: 
+    theme: readable
+    highlight: pygments
+    css: theme/css/rStyle.css
+---
+
+```{r, echo=FALSE}
+#if we are in R-studio and use knitter to generate html file in the same directory as this file comment this entire section
+hook_plot <- knit_hooks$get('plot')
+knit_hooks$set(plot=function(x, options) {
+    if (!is.null(options$pelican.publish) && options$pelican.publish) {
+        x <- paste0("{filename}", x)
+    }
+    hook_plot(x, options)
+})
+
+#if we are in Pelican and use Pelican 'build' OR 'regenerate'? to generate local html file 
+#in the 'same'output' directory of our Pelican-website uncomment this 2 lines 
+#and comment two lines at the end of section
+#opts_chunk$set(fig.path='../content/figure/',echo=TRUE, warning=TRUE, message=TRUE)
+opts_chunk$set(fig.path='../figureR/',echo=FALSE, warning=FALSE, message=FALSE)
+opts_chunk$set(pelican.publish=FALSE)
+
+
+#I think only if you had SSH and fab publish is working
+#But if you are ready to run pelican content and publish to the web, that should be TRUE. 
+#And figure path is different
+#opts_chunk$set(fig.path='../output/figure/',echo=TRUE, warning=TRUE, message=TRUE)
+#opts_chunk$set(pelican.publish=TRUE)
+
+```
+
+
+<!---
+## This was load_s_0.R inside the /Users/nk/Documents/devPro/R-home/3d/scripts folder
+## ---------------------------------------------
+## running time: 1.71438578367233
+## we selected 2nd SF step for all trials
+## SF step: 2, sub-movements: 0
+## we padded with 10 frames on the left&right sides for boundary effects
+## mallAngl, mallCent, mallEvent were updated to the selected time interval
+## mallAngl_alig, mallCent_alig, mallEvent_alig are dtw alighned after (centerRFoot_2+centerLFoot_2)
+## InBowStance has selected time intervals for Left to Right BS for alighned data
+## mallAnglD, mallCentD are downsampled (frd=15) and not aligned
+## mallAngl_aligD, mallCent_aligD are downsampled and aligned
+## This was load_s_0_st2_calc0.R inside the /Users/nk/Documents/devPro/R-home/3d/scripts folder
+## ---------------------------------------------
+-->
+
+
+```{r include=FALSE, cache=FALSE}
+ source("/Users/nk/Documents/devPro/R-home/3d/scripts/load_s_0_st2_calc0.R")
+ #,echo=FALSE, warning=FALSE, message=FALSE
+```
+
+
+```{r echo=FALSE }
+ #,echo=FALSE, warning=FALSE, message=FALSE
+ plot(mallAngl[[1]][1:78,1])
+```
+
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+summary(cars)
+```
+
+You can also embed plots, for example:
+
+```{r, echo=FALSE}
+plot(cars)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R **code** that generated the plot.
+
+[To dygraph2](../staticR/multipleDygraphs2.html)
+
+
+--------------------------
+***ok*, that is bold**
+>and that will be a quote
+what else?
+####small heading
+and 
+#here a large *one*
+but probably more interesting would be 
+this `git is good`
+or this:
+```
+git status
+git add
+git commit
+```
+basta
+This site was built using [GitHub Pages](https://pages.github.com/).
+- lovely
+- today
+- is
+- sunny

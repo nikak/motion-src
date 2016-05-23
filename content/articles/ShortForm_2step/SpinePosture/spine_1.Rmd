@@ -1,0 +1,1163 @@
+---
+Title: Lateral and anterior Changes in the thoracic and lumbar Areas of the Spine
+Category: Summary Stats
+Tags: summary posture, lateral tilting, anterior tilting, central, spine
+Authors: Nicolek
+Summary:  Summary statistics for the thoracic and lumbar curves during the 2nd step of the Tai Chi Short Form
+Series: Spine
+series_index: 2
+output: 
+  html_document:
+    theme: readable
+    highlight: pygments
+    css: theme/css/rStyle.css
+---
+
+```{r, echo=FALSE, cache=FALSE, include=FALSE}
+#after tags>>
+#Slug: relative-movement-of-the-clavicles-in-the-horisontal-plane
+#date after title >> Date: 2010-12-03 10:20
+#after date >> Modified: '`r format(Sys.Date(), "%B %d, %Y")`'
+
+library(knitr)
+#opts_knit$set( progress = TRUE, verbose = TRUE)
+knitr::opts_chunk$set(echo=F, warning=F, message=F, prompt=F, error=F)#
+#knitr::opts_chunk$set(results="asis")# true is default behaviour
+knitr::opts_chunk$set(fig.width=15,  fig.height = 15)
+knitr::opts_chunk$set(dev = 'svg')
+knitr::opts_chunk$set(dpi = 130)
+##echo=FALSE, results='hide', warning=F, message=FALSE
+```
+
+<!---
+## This was load_s_0.R inside the /Users/nk/Documents/devPro/R-home/3d/scripts folder
+## ---------------------------------------------
+## running time: 1.71438578367233
+## we selected 2nd SF step for all trials
+## SF step: 2, sub-movements: 0
+## we padded with 10 frames on the left&right sides for boundary effects
+## mallAngl, mallCent, mallEvent were updated to the selected time interval
+## mallAngl_alig, mallCent_alig, mallEvent_alig are dtw alighned after (centerRFoot_2+centerLFoot_2)
+## InBowStance has selected time intervals for Left to Right BS for alighned data
+## mallAnglD, mallCentD are downsampled (frd=15) and not aligned
+## mallAngl_aligD, mallCent_aligD are downsampled and aligned
+## This was load_s_0_st2_calc0.R inside the /Users/nk/Documents/devPro/R-home/3d/scripts folder
+## ---------------------------------------------
+## toc: true
+##rmarkdown::render(input='/Users/nk/Documents/devPro/R-home/3d/markdown/summaryStatistics/spine_1.Rmd',output_file='spine_1.html',envir=globalenv())
+-->
+
+```{r include=FALSE, cache=FALSE}
+
+ load("/Users/nk/Documents/devPro/R-home/3d/all_load_s_0_st2_calc0.RData", .GlobalEnv)
+ 
+ require(sm)
+ require(pander)
+ require(reshape2)
+ sm.options(verbose=0)
+ #class="table table-condensed" and <caption> should be inside table but doesn't work with rmd_reader?
+ # panderOptions("table.split.table", Inf)  ## don't split tables
+ # panderOptions('knitr.auto.asis', FALSE)
+```
+
+```{r include=FALSE, cache=FALSE}
+normAngl=function(ang){
+if(is.finite(ang)){
+# reduce the angle  
+ang =  ang %% (2*pi); 
+#force it to be the positive remainder, so that 0 <= angle < 360  
+ang = (ang + (2*pi)) %% (2*pi); 
+#force into the minimum absolute value residue class, so that -180 < angle <= 180  
+if (ang > pi)ang= ang-(2*pi);
+return(ang);
+}else return(ang)
+}
+
+# returns a nested lists: 1st level for sub-moves, 2nd level for trials
+f_getSubMove=function(ang, qa){
+  #ang is a 25-list with [1-col-marker and rows-frames] vectors
+  mNames=names(qa)#sub_moves
+  move=lapply(X=mNames,FUN=f_get1SubMove,ang=ang,qa=qa)
+  #str(lapply(X=names(qa),FUN=f_get1SubMove,ang=rdif1,qa=qa)) 
+  #>> returns 11-list with each 25-list, each with data vector
+  names(move)=names(qa);
+  return(move)
+}
+
+f_get1SubMove=function(subMov, ang, qa){
+#f_get1SubMove('m_1',a=rdif1,qa)
+#subMove is the number or string for the sub-move
+#qa is a list for all 11 sub-moves; each with 25-id-rows by 2 [end, start] of the frame columns
+#ang is a 25-list with [1-col-marker and rows-frames] vectors
+    idNames=rownames(qa[[subMov]])#id_trials
+    move2=lapply(X=idNames, FUN = f_getSubInterval,subMov,ang,qa=qa)
+    #lapply(X=rownames(qa[['m_1']]), FUN = f_getSubInterval,subMov='m_1',ang=rdif1,qa=qa)[[1]][1:2]
+    #lapply(X=rownames(qa[[1]]), FUN = f_getSubInterval,subMov=1,ang=rdif1,qa=qa)[[1]][1:2]
+    #returns list of 25 with each being vector of time series for subMov
+    
+    names(move2)=names(ang);
+    return(move2)
+}
+
+f_getSubInterval = function(idN,subMov,ang,qa){
+  #subMove is the number or string for the sub-move
+  #idN is a paricular trial id
+  # cat(sprintf('idN=%s\n',idN))
+  # cat(sprintf('subMov=%s\n',subMov))
+      movSt=qa[[subMov]][idN,1];#-buff; 
+      movEn=qa[[subMov]][idN,2];#+buff;
+      return(ang[[idN]][movSt:movEn])
+}
+
+#add 'gr' variable as a group factor (all id_1* >> 0 and all id_2* >> 1)
+adGrF=function(a){
+  k=array(dim=length(a[,1])); 
+  k[grep('id_1',a[,'Var1'])]=0; 
+  k[grep('id_2',a[,'Var1'])]=1; 
+  a=cbind(a,gr=k)
+  return(a)
+}
+
+f_getSubMove_collection=function(angCollect, qa){
+  #tList >> a collection of 25-lists with vectors (single marker-dim like rdif1)
+  #tList=list(rdif1,ldif1,sdif1)
+  #tList=lapply(X = angCollect,FUN = f_getSubMove,qa=qa)
+  m_tList=lapply(X = tList,FUN = melt)
+  names(m_tList)=names(angCollect)#c('rdif1','ldif1','sdif1')
+  lapply(X = m_tList,FUN = function(X){
+    colnames(X)=c('value','Var1','L1')
+    X$Var1=factor(X$Var1)
+    X$L1=factor(X$L1)
+    X=adGrF(X)
+  })
+}
+#------------------------------------------------------
+# extract elevation angles (in Degrees) for head (sp7,su7) and neck (sp6,su6) from the list of 25 trials 
+ant1=lapply(X=mallAngl, FUN=function(x){(x[,'sp3_2']-x[,'sp2_2'])*180/pi})
+lat1=lapply(X=mallAngl, FUN=function(x){(x[,'su3_2']-x[,'su2_2'])*180/pi})
+
+ant4=lapply(X=mallAngl, FUN=function(x){(x[,'sp5_2']-x[,'sp4_2'])*180/pi})
+lat4=lapply(X=mallAngl, FUN=function(x){(x[,'su5_2']-x[,'su4_2'])*180/pi})
+
+#sp5_2 – sp4_2 sp3_2 – sp2_2
+#we replace ribcage with thoracic << ant4 = ant5-ant4 lat5=lat5-lat4
+#we replace pelvis with lumbar << ant1 = ant3-ant2 lat1 = lat3-lat2
+tList=list(ant1,lat1,ant4,lat4)
+names(tList)=c('ant1','lat1','ant4','lat4')
+
+gr1Names=grep('id_1',names(ant1))
+gr2Names=grep('id_2',names(ant1))
+l1=length(gr1Names)
+l2=length(gr2Names)
+c2gr=c(replicate(l1,'brown'),replicate(l2,'green'))
+
+# find indexes for all avaliable sub-movement eventCodes for each of the 25 persons
+# we should get 12x25 matrix for 11 sub-movements of the 2nd step of the Short Form
+eventIndexes=sapply(mallEvent,FUN=function(x){which(x>0)})
+# create a list with each element being a 25x2 matrix with
+# rows for each trial and 2 columns for their frames for end/str of the sub-movement
+qa=lapply(X=1:length(eventIndexes[,1]),FUN=function(X,a){if(X<length(a[,1]))
+    return(cbind(a[X,],a[(X+1),]))},a=eventIndexes)
+qa[12]=NULL; names(qa)=paste('m',1:length(qa),sep='_')
+#------------------------------------------------------
+#new code
+tList=lapply(X = tList,FUN = f_getSubMove,qa=qa)
+m_tList=f_getSubMove_collection(tList, qa)
+#------------------------------------------------------
+#code 2001 values at the beginning of the form
+#values at the beginning of the form
+t2001=sapply(X = names(ant1),FUN = function(X,a1,a2){
+  k=which(a2[[X]]==2001)# 2001start of SF WuJi
+  for(ii in 1:5){
+  h1=a1[[X]][k,paste('sp',ii,'_2',sep='')]*180/pi
+  h2=a1[[X]][k,paste('su',ii,'_2',sep='')]*180/pi
+  if(ii==1)h=cbind(h1,h2)
+  else h=cbind(h,h1,h2)
+  }
+  return(h)
+},a1=allAngl,a2=allEvent)
+
+t2001=t(t2001)
+colnames(t2001)=c('ant1','lat1','ant2','lat2','ant3','lat3','ant4','lat4','ant5','lat5')
+t2001=cbind(t2001,gr=c(replicate(length(gr1Names),0),replicate(length(gr2Names),1)))
+t2001=as.data.frame(t2001, optional = F)
+
+```
+
+
+# How does thoracic and lumbar curve change relative to a vertical axis?
+
+We need to look at elevation angles of the 2 planar points (‘sp’ and ‘su’) in the 5 spinal planes (1-5). We approximate a thoracic curve as difference in elevation angles of 5th and 4th spinal planes that are constructed based on the C7-T7 and T7-T12 spinal segments (sp5-sp4). For a lumbar curve we take a difference in elevation angles of 3rd and 2nd spinal planes that are constructed based on the T12-L4 and L4-mid pelvic spinal segments (sp3-sp2).
+
+## Summary. Anterior angles in the thoracic and lumbar spinal areas
+
+In a sagittal plane a thoracic area of the spine has an outwards curve and as expected we have a range of negative angles between C7T7 and T7T12 spinal segments (sp5 - sp4 planes). In the starting standing position (‘2001’ code) the 1st group has about 10 degrees larger min/max range of angles (20 vs. 9 degrees), a larger (about 3 degrees) standard deviation and only 2 degrees larger mean value than the 2nd group. Also the mean values in the 1st group for the movement are about 4.7 degrees larger than in the 2nd and the min/max range is about 32 versus 26 degrees. In other words, the thoracic curve seems to be less pronounced in the 2nd group than in the 1st. 
+
+A lumbar area in a sagittal plane of the spine has an inwards curve and as expected we have a range of positive angles between T12L4 and L4Sacrum spinal segments (sp3 - sp2 planes). In the starting standing position (‘2001’ code) the 1st group has slightly larger min/max range of angles (13.7 vs. 11.8 degrees) and an inwards curve about 1 degree whereas the 2nd group has a mean value for the outwards curve about 0.8 degrees. For the movement 1st group has about 5.6 degrees larger mean (15.2 vs. 9.6) and about 16 degrees larger value range (57 vs. 41). Similarly to the thoracic area, the 1st group seem to have more pronounced lumbar curve than the 2nd group.
+
+In other words, there is a difference between 1st and 2nd group, e.g. about 2 degrees difference in mean values in standing position that scales to differences of 4.7 and 5.56 degrees during the movement for thoracic and lumbar values respectively. 
+
+Than data is grouped [by trial identities](#pN1) we can notice that in most trials the difference between the curve value in standing position and mean value during the 2nd step of the Short Form is clearly larger for the thoracic curve than for the lumbar curve; the ‘id_203’, ‘id_111’ and ‘id_103’ being exceptions. Also we can note that comparably to all trials, trials ‘id_114’ and ‘id_112’ have unusually large values for the thoracic curve whereas ‘id_211’ shows an unusually small value. The lumbar curve seems to vary much stronger across trials than the thoracic curve. The trials ‘id_112’ and ‘id_111’ show extreme values: the former has outwards directed lumbar curve (negative values) and latter has large positive values (the normal inwards directed lumbar curve).
+
+Than the data is grouped by [11 sub-movements](#pN2) as expected we see a group difference for the range of values: 1st group has larger thoracic and lumbar curves across the 11 sub-movements than the 2nd group. The 5th and 6th sub-movements show the smallest mean differences for thoracic curve 2nd the largest. The lumbar curve in the 2nd group has an unusually small mean in the 1st sub-movement, a large mean difference in the 11th and 6th sub-movements and a small difference in the 5th, 2nd and 4th sub-movements.
+
+Than we look at [two intervals](#pN3) with the symmetrical movement we see that within the trials the values in lumbar and thoracic curves are symmetrical in 1st and the 2nd intervals. Again the ‘id_114’ trial has unusually large values and ‘id_211’ small for thoracic curve. For lumbar curve ‘id_111’ has very high values, ‘id_211’, ‘id_204’ and ‘id_205’ small, and ‘id_112’ outwards directed curve.
+
+<p class='p_caption'>Thoracic area (C7-T12), anterior tilting >> 11 sub-movements</p>
+``` {r }
+a=m_tList[['ant4']]
+a1=describe(a[a$gr==0,1])
+a2=describe(a[a$gr==1,1])
+a1=rbind(a1,a2,describe(t2001$ant4[t2001$gr==0]),describe(t2001$ant4[t2001$gr==1])); 
+rownames(a1)=c('1st group', '2nd group','2001-1st','2001-2nd')
+# set.caption('Thoracic area, C7-T12')
+pander(a1, use.hyphening = TRUE, style='rmarkdown')
+```
+
+<p class='p_caption'>Lumbar area (T12-Sacrum), anterior tilting >> 11 sub-movements</p>
+``` {r }
+a=m_tList[['ant1']]
+a1=describe(a[a$gr==0,1])
+a2=describe(a[a$gr==1,1])
+a1=rbind(a1,a2,describe(t2001$ant1[t2001$gr==0]),describe(t2001$ant1[t2001$gr==1])); 
+rownames(a1)=c('1st group', '2nd group','2001-1st','2001-2nd')
+# set.caption('Lumbar area, T12-Sacrum')
+pander(a1, use.hyphening = TRUE, style='rmarkdown')
+```
+
+``` {r } 
+a=m_tList[['ant4']]
+par(mfrow=c(4,2)) 
+par(mar=c(2.5, 2.5, 1.1, 1.5),bty="n")
+
+sm.density.compare(a$value[is.finite(a$value)], a$gr, xlab="degrees",col=c("brown", "green"))
+legend("topright", legend=c("1st group", "2nd group"),col=c("brown", "green"), lty=1:2, cex=0.5,box.lty=0)
+title(main='Thoracic')
+grid()
+abline(v=describe(a[a$gr==0,1])[1],col='brown')
+abline(v=describe(a[a$gr==1,1])[1],col='green')
+
+hist(a[,1],main='all trials')
+
+sm.density.compare(t2001$ant4, t2001$gr, xlab="degrees",col=c("brown", "green"))
+title(main='frame 2001')
+legend("topright", legend=c("1st group", "2nd group"),col=c("brown", "green"), lty=1:2, cex=0.5,box.lty=0)
+grid()
+abline(v=describe(t2001$ant4[t2001$gr==0])[1],col='brown')
+abline(v=describe(t2001$ant4[t2001$gr==1])[1],col='green')
+
+hist(t2001$ant4,main='all trials')
+#--------------------------------------------Lumbar area, T12-Sacrum
+a=m_tList[['ant1']]
+sm.density.compare(a$value[is.finite(a$value)], a$gr, xlab="degrees",col=c("brown", "green"))
+legend("topright", legend=c("1st group", "2nd group"),col=c("brown", "green"), lty=1:2, cex=0.5,box.lty=0)
+title(main='Lumbar')
+grid()
+abline(v=describe(a[a$gr==0,1])[1],col='brown')
+abline(v=describe(a[a$gr==1,1])[1],col='green')
+
+hist(a[,1],main='all trials')
+
+sm.density.compare(t2001$ant1, t2001$gr, xlab="degrees",col=c("brown", "green"))
+title(main='frame 2001')
+legend("topright", legend=c("1st group", "2nd group"),col=c("brown", "green"), lty=1:2, cex=0.5,box.lty=0)
+grid()
+abline(v=describe(t2001$ant1[t2001$gr==0])[1],col='brown')
+abline(v=describe(t2001$ant1[t2001$gr==1])[1],col='green')
+
+hist(t2001$ant1,main='all trials')
+```
+
+## Summary. Lateral angles in the thorasic and lumbar areas
+
+In a coronal plane thoracic and lumbar areas of the spine should not show any tilting towards left or right sides. All negative results would indicate that we have an outwards-directed curve to the right (a left tilt) and positive values would mark an outwards curve to the left (a right tilt).
+
+As expected we have 1 and 0 degree mean thoracic values and 0.5 and -1 degree mean lumbar values for the 1st and 2nd group respectively. Notably, we have a 1 degree tilting leftwards for the thoracic curve in standing position (‘2001’ code) in both groups. Also the ranges of thoracic values in the 1st group are biased by about 5 degrees towards leftward tilt and in the 2nd group towards the rightward tilt by about 2 degrees. For the ranges in lumbar values the 1st group shows a bias towards rightwards tilting by about 8 degrees.
+
+Than data is grouped [by trial identities](#lN1) we can notice that thoracic values in trials ‘id_114’ show comparatively large tilt rightwards; the lumbar values in trials ‘id_105’, ‘id_112’ and ‘id_208’ show unusually large rightward tilting and ‘id_205’, ‘id_115’ and ‘id_206’ a leftward tilt.
+
+Than the data is grouped by [11 sub-movements](#lN2) we see a general difference for the range of values: 1st group tend to have a rightward tilt in thoracic values apart from the 2nd and 10th sub-movements. The lumbar curves in the 9th, 10th and 11th sub-movements a rightwards tilt in the both groups. Whereas in the 1st, 2nd, and from the 4th, to 7th sub-movements both groups show the leftwards tilt. 
+
+Than we look at [two intervals](#lN3) with the symmetrical movement we see that within the trials the values in lumbar and thoracic curves are symmetrical in 1st and the 2nd intervals. Again the ‘id_114’ trial has unusually large thoracic values in both intervals. Notably, within the individual trials the ranges of lumbar values are tighter than for thoracic and lumbar values for the 1st interval are always tilting more leftwards comparing to the second interval. In other words, it seems that the left to right bow stance stepping is associated with tendency to lean leftwards in the lumbar curve. 
+
+Than we look at 4 phases of the 2 intervals we can notice that with exception of ‘id_112’ and ‘id_204’ the 1st and 3rd phases of two intervals (4th/8th and 6th/10th sub-movements) have tighter value ranges for the lumbar area than 2nd and 4th phases, e.g. there is less lumbar movement during these phases. Also within individual trials, the time series for thoracic and lumbar areas are symmetrical around horizontal lines between 1st and 2nd intervals. 
+
+<p class='p_caption'>Thoracic area (C7-T12), lateral tilting >> 11 sub-movements</p>
+``` {r }
+a=m_tList[['lat4']]
+a1=describe(a[a$gr==0,1])
+a2=describe(a[a$gr==1,1])
+a1=rbind(a1,a2,describe(t2001$lat4[t2001$gr==0]),describe(t2001$lat4[t2001$gr==1]))
+rownames(a1)=c('1st group', '2nd group','2001-1st','2001-2nd')
+# set.caption('Thoracic area, C7-T12')
+pander(a1, use.hyphening = TRUE, style='rmarkdown')
+```
+
+<p class='p_caption'>Lumbar area (T12-Sacrum), lateral tilting >> 11 sub-movements</p>
+``` {r }
+a=m_tList[['lat1']]
+a1=describe(a[a$gr==0,1])
+a2=describe(a[a$gr==1,1])
+a1=rbind(a1,a2,describe(t2001$lat1[t2001$gr==0]),describe(t2001$lat1[t2001$gr==1]))
+rownames(a1)=c('1st group', '2nd group','2001-1st','2001-2nd')
+# set.caption('Lumbar area, T12-Sacrum')
+pander(a1, use.hyphening = TRUE, style='rmarkdown')
+```
+
+``` {r } 
+
+par(mfrow=c(4,2)) 
+par(mar=c(2.5, 2.5, 1.1, 1.5),bty="n")
+a=m_tList[['lat4']]
+
+sm.density.compare(a$value[is.finite(a$value)], a$gr, xlab="degrees",col=c("brown", "green"))
+title(main='Thoracic')
+legend("topright", legend=c("1st group", "2nd group"),col=c("brown", "green"), lty=1:2, cex=0.5,box.lty=0)
+grid()
+abline(v=describe(a[a$gr==0,1])[1],col='brown')
+abline(v=describe(a[a$gr==1,1])[1],col='green')
+
+hist(a[,1],main='all trials')
+
+sm.density.compare(t2001$lat4, t2001$gr, xlab="degrees",col=c("brown", "green"))
+title(main='frame 2001')
+legend("topright", legend=c("1st group", "2nd group"),col=c("brown", "green"), lty=1:2, cex=0.5,box.lty=0)
+grid()
+abline(v=describe(t2001$lat4[t2001$gr==0])[1],col='brown')
+abline(v=describe(t2001$lat4[t2001$gr==1])[1],col='green')
+
+hist(t2001$lat4,main='all trials')
+
+#--------------------------Lumbar area, T12-Sacrum
+a=m_tList[['lat1']]
+sm.density.compare(a$value[is.finite(a$value)], a$gr, xlab="degrees",col=c("brown", "green"))
+title(main='Lumbar area')
+legend("topright", legend=c("1st group", "2nd group"),col=c("brown", "green"), lty=1:2, cex=0.5,box.lty=0)
+grid()
+abline(v=describe(a[a$gr==0,1])[1],col='brown')
+abline(v=describe(a[a$gr==1,1])[1],col='green')
+
+hist(a[,1],main='all trials')
+
+sm.density.compare(t2001$lat4, t2001$gr, xlab="degrees",col=c("brown", "green"))
+title(main='frame 2001')
+legend("topright", legend=c("1st group", "2nd group"),col=c("brown", "green"), lty=1:2, cex=0.5,box.lty=0)
+grid()
+abline(v=describe(t2001$lat1[t2001$gr==0])[1],col='brown')
+abline(v=describe(t2001$lat1[t2001$gr==1])[1],col='green')
+
+hist(t2001$lat1,main='all trials')
+```
+
+
+#### <a name="pN1"></a>Posterior-anterior angles in the thoracic and lumbar areas, grouped by id-trials
+
+Below are boxplots of the angles between spinal segments in lumabr and thoracic reas across different trials for the entire 2nd step of the Short Form. Brown color represents the 1st group and green the 2nd. Horizontal axes are given in degrees so that negative values correspond to an outward curve and negative to an inward curve. The vertical axes represent grouping factor – identity of the trial.
+
+``` {r } 
+par(mfrow=c(1,2)) 
+par(mar=c(2.5, 4.5, 1.1, 1.5))
+a=m_tList[['ant4']]
+boxplot(value ~ Var1 , data = a,horizontal = TRUE, las=2, col = c2gr,cex.axis=.7,main='Thoracic area' )
+grid()
+abline(v=mean(a$value[a$gr==0],na.rm = T),col='brown')
+abline(v=mean(a$value[a$gr==1],na.rm = T),col='green')
+
+a=m_tList[['ant1']]
+boxplot(value ~ Var1 , data = a,horizontal = TRUE, las=2, col = c2gr,cex.axis=.7,main='Lumbar area' )
+grid()
+abline(v=mean(a$value[a$gr==0],na.rm = T),col='brown')
+abline(v=mean(a$value[a$gr==1],na.rm = T),col='green')
+
+```
+
+<p class='p_caption'>Thoracic area (C7-T12), anterior tilting >> 11 sub-movements</p>
+``` {r }
+a=m_tList[['ant4']]
+a1=a[a$gr==0,]
+a1=droplevels(a1)
+a1=tapply(a1$value, a1$Var1, summary)
+a1=sapply(a1, "[", c("Mean"))
+a1=describe(a1)
+a2=a[a$gr==1,]
+a2=droplevels(a2)
+a2=tapply(a2$value, a2$Var1, summary)
+a2=sapply(a2, "[", c("Mean"))
+a2=describe(a2)
+a=rbind(a1,a2); rownames(a)=c('1st group', '2nd group')
+# set.caption('Thoracic area, C7-T12')
+pander(a, use.hyphening = TRUE, style='rmarkdown')
+```
+
+<p class='p_caption'>Lumbar area (T12-Sacrum), anterior tilting >> 11 sub-movements</p>
+``` {r }
+a=m_tList[['ant1']]
+a1=a[a$gr==0,]
+a1=droplevels(a1)
+a1=tapply(a1$value, a1$Var1, summary)
+a1=sapply(a1, "[", c("Mean"))
+a1=describe(a1)
+a2=a[a$gr==1,]
+a2=droplevels(a2)
+a2=tapply(a2$value, a2$Var1, summary)
+a2=sapply(a2, "[", c("Mean"))
+a2=describe(a2)
+a=rbind(a1,a2); rownames(a)=c('1st group', '2nd group')
+# set.caption('Lumbar area, T12-Sacrum')
+pander(a, use.hyphening = TRUE, style='rmarkdown')
+```
+
+Density plots of the angle values for the entire 2nd step (11 sub-movements) grouped by the trial identities. Brown color represents the thoracic angles for the 1st group and green the 2nd; vertical lines mark mean value of the corresponding trials; blue vertical lines mark the angle values in the beginning of the form.
+
+Dark orange color represents the lumbar angles for the 1st group and dark green the 2nd; vertical lines mark mean value of the corresponding trials; blue dotted vertical lines mark the angle values in the beginning of the form.
+
+``` {r } 
+a=m_tList[['ant4']]
+b=m_tList[['ant1']]
+c2dgr=c(replicate(l1,'dark orange'),replicate(l2,'dark green'))
+xl=c(min(a$value,na.rm = T),max(a$value,na.rm = T),
+     min(b$value,na.rm = T),max(b$value,na.rm = T))
+xl=c(min(xl),max(xl))
+yl=c(0,.5)
+
+par(mfrow=c(5,5)) 
+par(mar=c(2.1, 1.9, 1.1, 1.9))
+
+for(i in 1:length(names(ant1))){
+tN=names(ant1)[i]
+sm.density(a$value[a$Var1==tN], xlab="degrees", xlim=xl,ylim=yl, col=c2gr[i])
+
+sm.density(b$value[b$Var1==tN], xlab="degrees",lty=1, xlim=xl,ylim=yl, col=c2dgr[i],add=T)
+title(main=tN)
+grid()
+abline(v=mean(a$value[a$Var1==tN],na.rm = T),col=c2gr[i])
+abline(v=t2001[tN,'ant4'],col='blue')
+
+abline(v=mean(b$value[b$Var1==tN],na.rm = T),col=c2dgr[i],lty=1)
+abline(v=t2001[tN,'ant1'],col='blue',lty=2)
+}
+```
+
+#### <a name="lN1"></a>Lateral tilt in the thoracic and lumbar areas, grouped by id-trials
+
+Below are boxplots of the angles between spinal segments in lumabr and thoracic reas across different trials for the entire 2nd step of the Short Form. Brown color represents the 1st group and green the 2nd. Horizontal axes are given in degrees so that negative values correspond to a rightwards-directed curve (a left tilt) and positive values mark a lefttwards-directed curve (a right tilt). The vertical axes represent grouping factor – identity of the trial.
+
+``` {r } 
+par(mfrow=c(1,2)) 
+par(mar=c(2.5, 4.5, 1.1, 1.5))
+
+a=m_tList[['lat4']]
+boxplot(value ~ Var1 , data = a,horizontal = TRUE, las=2, col = c2gr,cex.axis=.7,main='Thoracic area' )
+grid()
+abline(v=mean(a$value[a$gr==0],na.rm = T),col='brown')
+abline(v=mean(a$value[a$gr==1],na.rm = T),col='green')
+
+a=m_tList[['lat1']]
+boxplot(value ~ Var1 , data = a,horizontal = TRUE, las=2, col = c2gr,cex.axis=.7,main='Lumbar area' )
+grid()
+abline(v=mean(a$value[a$gr==0],na.rm = T),col='brown')
+abline(v=mean(a$value[a$gr==1],na.rm = T),col='green')
+```
+
+<p class='p_caption'>Thoracic area (C7-T12), lateral tilting >> 11 sub-movements</p>
+``` {r }
+a=m_tList[['lat4']]
+a1=a[a$gr==0,]
+a1=droplevels(a1)
+a1=tapply(a1$value, a1$Var1, summary)
+a1=sapply(a1, "[", c("Mean"))
+a1=describe(a1)
+a2=a[a$gr==1,]
+a2=droplevels(a2)
+a2=tapply(a2$value, a2$Var1, summary)
+a2=sapply(a2, "[", c("Mean"))
+a2=describe(a2)
+a=rbind(a1,a2); rownames(a)=c('1st group', '2nd group')
+# set.caption('Thoracic area, C7-T12')
+pander(a, use.hyphening = TRUE, style='rmarkdown')
+```
+
+<p class='p_caption'>Lumbar area (T12-Sacrum), lateral tilting >> 11 sub-movements</p>
+``` {r }
+a=m_tList[['lat1']]
+a1=a[a$gr==0,]
+a1=droplevels(a1)
+a1=tapply(a1$value, a1$Var1, summary)
+a1=sapply(a1, "[", c("Mean"))
+a1=describe(a1)
+a2=a[a$gr==1,]
+a2=droplevels(a2)
+a2=tapply(a2$value, a2$Var1, summary)
+a2=sapply(a2, "[", c("Mean"))
+a2=describe(a2)
+a=rbind(a1,a2); rownames(a)=c('1st group', '2nd group')
+# set.caption('Lumbar area, T12-Sacrum')
+pander(a, use.hyphening = TRUE, style='rmarkdown')
+
+```
+
+Density plots of the angle values for the entire 2nd step (11 sub-movements) grouped by the trial identities. Brown color represents the thoracic angles for the 1st group and green the 2nd; vertical lines mark mean value of the corresponding trials; blue vertical lines mark the angle values in the beginning of the form. 
+
+Dark orange color represents the lumbar angles for the 1st group and dark green the 2nd; vertical lines mark mean value of the corresponding trials; blue dotted vertical lines mark the angle values in the beginning of the form.
+
+``` {r } 
+a=m_tList[['lat4']]
+b=m_tList[['lat1']]
+xl=c(min(a$value,na.rm = T),max(a$value,na.rm = T),
+     min(b$value,na.rm = T),max(b$value,na.rm = T))
+xl=c(min(xl),max(xl))
+yl=c(0,.5)
+par(mfrow=c(5,5)) 
+par(mar=c(2.1, 1.9, 1.1, 1.9))
+
+for(i in 1:length(names(ant1))){
+tN=names(ant1)[i]
+sm.density(a$value[a$Var1==tN], xlab="degrees", xlim=xl,ylim=yl, col=c2gr[i])
+title(main=tN)
+grid()
+abline(v=mean(a$value[a$Var1==tN],na.rm = T),col=c2gr[i])
+abline(v=t2001[tN,'lat4'],col='blue')
+
+sm.density(b$value[a$Var1==tN], xlab="degrees", xlim=xl,ylim=yl, col=c2dgr[i], add=T)
+title(main=tN)
+grid()
+abline(v=mean(b$value[b$Var1==tN],na.rm = T),col=c2dgr[i])
+abline(v=t2001[tN,'lat1'],col='blue',lty=2)
+}
+```
+
+#### <a name="pN2"></a>Anterior tilt in the thoracic and lumbar areas, grouped by sub-movements
+
+Also we can look at differences in the angles across the 11 sub-movements without differentiating between individual trials. Again, the brown color represents the 1st group and green the 2nd. Horizontal axes are given in degrees of the angles and the vertical axes represent grouping factor – a number of the sub-movement.
+
+```{r }
+
+par(mar=c(2.5, 4.5, 1.1, 1.5))
+par(mfrow=c(2,1)) 
+
+a=m_tList[['ant4']]
+boxplot(value~L1, data = a, subset=(a$gr==0), horizontal=T,las=2,col=rgb(1,.3,.5, alpha=0.3),medcol="red",add=F, notch=TRUE, varwidth=T,cex.axis=.7, main='Thoracic area, C7-T12')
+
+boxplot(value~L1, data = a, subset=(a$gr==1), horizontal=T,las=2,col=rgb(.5,1,.3, alpha=0.6), medcol="green",add=T, varwidth=T,cex.axis=.7)
+grid()
+a1=mean(sapply(X=unique(a$L1),FUN = function(X,aa){mean(aa$value[aa$gr==0 & aa$L1==X],na.rm = T)},aa=a))
+a2=mean(sapply(X=unique(a$L1),FUN = function(X,aa){mean(aa$value[aa$gr==1 & aa$L1==X],na.rm = T)},aa=a))
+abline(v=a1,col='brown')
+abline(v=a2,col='green')
+
+a=m_tList[['ant1']]
+boxplot(value~L1, data = a, subset=(a$gr==0), horizontal=T,las=2,col=rgb(1,.3,.5, alpha=0.3),medcol="red",add=F, notch=TRUE, varwidth=T,cex.axis=.7, main='Lumbar area, T12-Sacrum')
+
+boxplot(value~L1, data = a, subset=(a$gr==1), horizontal=T,las=2,col=rgb(.5,1,.3, alpha=0.6), medcol="green",add=T, varwidth=T,cex.axis=.7)
+grid()
+a1=mean(sapply(X=unique(a$L1),FUN = function(X,aa){mean(aa$value[aa$gr==0 & aa$L1==X],na.rm = T)},aa=a))
+a2=mean(sapply(X=unique(a$L1),FUN = function(X,aa){mean(aa$value[aa$gr==1 & aa$L1==X],na.rm = T)},aa=a))
+abline(v=a1,col='brown')
+abline(v=a2,col='green')
+```
+
+<p class='p_caption'>Thoracic area (C7-T12), anterior tilting >> 11 sub-movements</p>
+``` {r }
+a=m_tList[['ant4']]
+a1=a[a$gr==0,]
+a1=droplevels(a1)
+a1=tapply(a1$value, a1$L1, summary)
+a1=sapply(a1, "[", c("Mean"))
+a1=describe(a1)
+
+a2=a[a$gr==1,]
+a2=droplevels(a2)
+a2=tapply(a2$value, a2$L1, summary)
+a2=sapply(a2, "[", c("Mean"))
+a2=describe(a2)
+a=rbind(a1,a2); rownames(a)=c('1st group', '2nd group')
+# set.caption('Thoracic area, C7-T12')
+pander(a, use.hyphening = TRUE, style='rmarkdown')
+```
+
+<p class='p_caption'>Lumbar area (T12-Sacrum), anterior tilting >> 11 sub-movements</p>
+``` {r }
+a=m_tList[['ant1']]
+a1=a[a$gr==0,]
+a1=droplevels(a1)
+a1=tapply(a1$value, a1$L1, summary)
+a1=sapply(a1, "[", c("Mean"))
+a1=describe(a1)
+
+a2=a[a$gr==1,]
+a2=droplevels(a2)
+a2=tapply(a2$value, a2$L1, summary)
+a2=sapply(a2, "[", c("Mean"))
+a2=describe(a2)
+a=rbind(a1,a2); rownames(a)=c('1st group', '2nd group')
+# set.caption('Lumbar area, T12-Sacrum')
+pander(a, use.hyphening = TRUE, style='rmarkdown')
+```
+
+Density plots of the angle values grouped by the 11 sub-movements. Brown color represents the 1st group and green the 2nd; vertical lines mark mean value of the corresponding sub-movement for 1st and 2nd group. The 2nd and 3rd rows capture a symmetrical motion sequence: from the left into right bow stance and from the right into left.
+
+``` {r fig.height=10} 
+a=m_tList[['ant4']]
+
+xl=c(min(a$value,na.rm = T),max(a$value,na.rm = T))
+yl=c(0,.5)
+par(mar=c(2.1, 1.9, 1.1, 1.9))
+par(mfrow=c(3,4)) 
+i=1
+for(ii in 1:(length(unique(a$L1))+1)){
+  if(ii==1){
+    plot(1, type="n", axes=F, xlab="", ylab="")
+    text(x=1,labels='Thoracic', cex = 1.7,adj = c(.5,.5))}
+  else{
+tN=unique(a$L1)[i]
+sm.density.compare(a$value[a$L1==tN & is.finite(a$value)], a$gr[a$L1==tN], xlab="degrees", xlim=xl,ylim=yl, col=c('brown','green'))
+title(main=tN)
+grid()
+abline(v=mean(a$value[a$L1==tN & a$gr==0],na.rm = T),col='brown')
+abline(v=mean(a$value[a$L1==tN & a$gr==1],na.rm = T),col='green')
+
+i=i+1
+}
+}
+
+a=m_tList[['ant1']]
+
+xl=c(min(a$value,na.rm = T),max(a$value,na.rm = T))
+yl=c(0,.5)
+par(mar=c(2.1, 1.9, 1.1, 1.9))
+par(mfrow=c(3,4)) 
+i=1
+for(ii in 1:(length(unique(a$L1))+1)){
+  if(ii==1){
+    plot(1, type="n", axes=F, xlab="", ylab="")
+    text(x=1,labels='Lumbar', cex = 1.7,adj = c(.5,.5))}
+  else{
+tN=unique(a$L1)[i]
+sm.density.compare(a$value[a$L1==tN & is.finite(a$value)], a$gr[a$L1==tN], xlab="degrees", xlim=xl,ylim=yl, col=c('brown','green'))
+title(main=tN)
+grid()
+abline(v=mean(a$value[a$L1==tN & a$gr==0],na.rm = T),col='brown')
+abline(v=mean(a$value[a$L1==tN & a$gr==1],na.rm = T),col='green')
+
+i=i+1
+}
+}
+```
+
+#### <a name="lN2"></a>Lateral tilt in the thoracic and lumbar areas, grouped by sub-movements
+
+Also we can look at differences in the angles across the 11 sub-movements without differentiating between individual trials. Again, the brown color represents the 1st group and green the 2nd. Horizontal axes are given in degrees of the elevation angles and the vertical axes represent grouping factor – a number of the sub-movement.
+
+```{r }
+par(mfrow=c(2,1))
+par(mar=c(2.5, 4.5, 1.1, 1.5))
+
+a=m_tList[['lat4']]
+boxplot(value~L1, data = a, subset=(a$gr==0), horizontal=T,las=2,col=rgb(1,.3,.5, alpha=0.3),medcol="red",add=F, notch=TRUE, varwidth=T,cex.axis=.7, main='Thoracic area, C7-T12')
+boxplot(value~L1, data = a, subset=(a$gr==1), horizontal=T,las=2,col=rgb(.5,1,.3, alpha=0.6), medcol="green", add=T, varwidth=T,cex.axis=.7)
+grid()
+a1=mean(sapply(X=unique(a$L1),FUN = function(X,aa){mean(aa$value[aa$gr==0 & aa$L1==X],na.rm = T)},aa=a))
+a2=mean(sapply(X=unique(a$L1),FUN = function(X,aa){mean(aa$value[aa$gr==1 & aa$L1==X],na.rm = T)},aa=a))
+abline(v=a1,col='brown')
+abline(v=a2,col='green')
+
+a=m_tList[['lat1']]
+boxplot(value~L1, data = a, subset=(a$gr==0), horizontal=T,las=2,col=rgb(1,.3,.5, alpha=0.3),medcol="red",add=F, notch=TRUE, varwidth=T,cex.axis=.7, main='Lumbar area, T12-Sacrum')
+boxplot(value~L1, data = a, subset=(a$gr==1), horizontal=T,las=2,col=rgb(.5,1,.3, alpha=0.6), medcol="green", add=T, varwidth=T,cex.axis=.7)
+grid()
+a1=mean(sapply(X=unique(a$L1),FUN = function(X,aa){mean(aa$value[aa$gr==0 & aa$L1==X],na.rm = T)},aa=a))
+a2=mean(sapply(X=unique(a$L1),FUN = function(X,aa){mean(aa$value[aa$gr==1 & aa$L1==X],na.rm = T)},aa=a))
+abline(v=a1,col='brown')
+abline(v=a2,col='green')
+```
+
+<p class='p_caption'>Thoracic area (C7-T12), lateral tilting >> 11 sub-movements</p>
+``` {r }
+a=m_tList[['lat4']]
+a1=a[a$gr==0,]
+a1=droplevels(a1)
+a1=tapply(a1$value, a1$L1, summary)
+a1=sapply(a1, "[", c("Mean"))
+a1=describe(a1)
+
+a2=a[a$gr==1,]
+a2=droplevels(a2)
+a2=tapply(a2$value, a2$L1, summary)
+a2=sapply(a2, "[", c("Mean"))
+a2=describe(a2)
+a=rbind(a1,a2); rownames(a)=c('1st group', '2nd group')
+# set.caption('Thoracic area, C7-T12')
+pander(a, use.hyphening = TRUE, style='rmarkdown')
+```
+
+<p class='p_caption'>Lumbar area (T12-Sacrum), lateral tilting >> 11 sub-movements</p>
+``` {r }
+a=m_tList[['lat1']]
+a1=a[a$gr==0,]
+a1=droplevels(a1)
+a1=tapply(a1$value, a1$L1, summary)
+a1=sapply(a1, "[", c("Mean"))
+a1=describe(a1)
+
+a2=a[a$gr==1,]
+a2=droplevels(a2)
+a2=tapply(a2$value, a2$L1, summary)
+a2=sapply(a2, "[", c("Mean"))
+a2=describe(a2)
+a=rbind(a1,a2); rownames(a)=c('1st group', '2nd group')
+# set.caption('Lumbar area, T12-Sacrum')
+pander(a, use.hyphening = TRUE, style='rmarkdown')
+```
+
+Density plots of the angle values grouped by the 11 sub-movements. Brown color represents the 1st group and green the 2nd; vertical lines mark mean value of the corresponding sub-movement for 1st and 2nd group. The 2nd and 3rd rows capture a symmetrical motion sequence: from the left into right bow stance and from the right into left.
+
+``` {r fig.height=10} 
+a=m_tList[['lat4']]
+xl=c(min(a$value,na.rm = T),max(a$value,na.rm = T))
+yl=c(0,.5)
+par(mar=c(2.1, 1.9, 1.1, 1.9))
+par(mfrow=c(3,4)) 
+i=1
+for(ii in 1:(length(unique(a$L1))+1)){
+  if(ii==1){
+    plot(1, type="n", axes=F, xlab="", ylab="")
+    text(x=1,labels='Thoracic', cex = 1.7,adj = c(.5,.5))}
+  else{
+tN=unique(a$L1)[i]
+sm.density.compare(a$value[a$L1==tN & is.finite(a$value)], a$gr[a$L1==tN], xlab="degrees", xlim=xl,ylim=yl, col=c('brown','green'))
+title(main=tN)
+grid()
+abline(v=mean(a$value[a$L1==tN & a$gr==0],na.rm = T),col='brown')
+abline(v=mean(a$value[a$L1==tN & a$gr==1],na.rm = T),col='green')
+i=i+1
+}
+}
+
+a=m_tList[['lat1']]
+xl=c(min(a$value,na.rm = T),max(a$value,na.rm = T))
+yl=c(0,.5)
+par(mar=c(2.1, 1.9, 1.1, 1.9))
+par(mfrow=c(3,4)) 
+i=1
+for(ii in 1:(length(unique(a$L1))+1)){
+  if(ii==1){
+    plot(1, type="n", axes=F, xlab="", ylab="")
+    text(x=1,labels='Lumbar', cex = 1.7,adj = c(.5,.5))}
+  else{
+tN=unique(a$L1)[i]
+sm.density.compare(a$value[a$L1==tN & is.finite(a$value)], a$gr[a$L1==tN], xlab="degrees", xlim=xl,ylim=yl, col=c('brown','green'))
+title(main=tN)
+grid()
+abline(v=mean(a$value[a$L1==tN & a$gr==0],na.rm = T),col='brown')
+abline(v=mean(a$value[a$L1==tN & a$gr==1],na.rm = T),col='green')
+i=i+1
+}
+}
+```
+
+
+#### <a name="pN3"></a>Anterior tilt in the thoracic and lumbar areas, grouped by id-trials and sub-movements
+
+Below are boxplots for two intervals of the 2nd step that capture symmetrical body motion: from the left to right bow stance and from the right to left bow stance. The boxplots of these intervals are superimposed for each of the trials. The **1st interval is marked by green** color and the **2nd by red** (color is not associated with groups). 
+
+``` {r fig.height=18} 
+a1=cbind(qa[['m_4']][,1],qa[['m_7']][,2])
+a2=cbind(qa[['m_8']][,1],qa[['m_11']][,2])
+a1=list(m_4_7=a1,m_8_11=a2)
+ant4_2bow=f_getSubMove(a=ant4, qa=a1)
+ant4_2bow=melt(ant4_2bow)
+
+ant1_2bow=f_getSubMove(a=ant1, qa=a1)
+ant1_2bow=melt(ant1_2bow)
+
+par(mfrow=c(2,1)) 
+par(mar=c(2.5, 4.5, 1.1, 1.5))
+
+m_s_2bow=ant4_2bow
+
+boxplot(value~L2, data=m_s_2bow, subset=L1=='m_4_7', horizontal=T,las=2,col=rgb(.5,1,.3, alpha=0.6), medcol="green", varwidth=T,cex.axis=.7, main='Thoracic area, C7-T12')
+boxplot(value~L2, data=m_s_2bow, subset=L1=='m_8_11', horizontal=T,las=2,col=rgb(1,.3,.5, alpha=0.3),medcol="red",add=T, notch=TRUE, varwidth=T,cex.axis=.7)
+grid()
+
+abline(v=mean(m_s_2bow$value[m_s_2bow$L1=='m_4_7'],na.rm = T),col=rgb(.5,1,.3, alpha=0.8))
+abline(v=mean(m_s_2bow$value[m_s_2bow$L1=='m_8_11'],na.rm = T),col=rgb(1,.3,.5, alpha=0.8))
+#------------------------------Lumbar area, T12-Sacrum
+m_s_2bow=ant1_2bow
+
+boxplot(value~L2, data=m_s_2bow, subset=L1=='m_4_7', horizontal=T,las=2,col=rgb(.5,1,.3, alpha=0.6), medcol="green", varwidth=T,cex.axis=.7, main='Lumbar area, T12-Sacrum')
+boxplot(value~L2, data=m_s_2bow, subset=L1=='m_8_11', horizontal=T,las=2,col=rgb(1,.3,.5, alpha=0.3),medcol="red",add=T, notch=TRUE, varwidth=T,cex.axis=.7)
+grid()
+
+abline(v=mean(m_s_2bow$value[m_s_2bow$L1=='m_4_7'],na.rm = T),col=rgb(.5,1,.3, alpha=0.8))
+abline(v=mean(m_s_2bow$value[m_s_2bow$L1=='m_8_11'],na.rm = T),col=rgb(1,.3,.5, alpha=0.8))
+
+```
+
+Also, we can differentiate between the different sub-movements within the two intervals and look at them individually. Below are two columns of the boxplots with 4 rows that represent consecutive phases of our two intervals. The 1st column represents the movement from the left to right bow stance (4th - 7th sub-movements), the 2nd column represents the movement from the right to left bow stance (8th - 11th sub-movements).
+
+Brown and green color mark data of the thoracic angles for the 1st and 2nd group. Pale semi-transparent yellow and cyan-green colors mark angles of the lumbar for the 1st and 2nd group.
+
+```{r fig.height=23}
+#print boxplot of trial's mean-values for each sub-movement
+par(mfrow=c(4,2)) 
+par(mar=c(4.5, 4.5, 0.5, 1.5))
+a=m_tList[['ant4']]
+b=tList[['ant4']]
+
+a2=m_tList[['ant1']]
+b2=tList[['ant1']]
+
+c2=c(rgb(1, .9, .1, alpha=.5),rgb(.1, 1, .8, alpha=.5))
+c2=c(replicate(l1,c2[1]),replicate(l2,c2[2]))
+
+xl=c(min(a$value,na.rm = T),max(a$value,na.rm = T),
+     min(a2$value,na.rm = T),max(a2$value,na.rm = T))
+xl=c(min(xl),max(xl))
+#boxplot for mean-values of all sub-movements for each trial
+boxplot(value ~ L1 , data = melt(b[['m_4']]), horizontal = TRUE, las=2, col = c2gr, ylim=xl,medcol='black')
+boxplot(value ~ L1 , data = melt(b2[['m_4']]), horizontal = TRUE, las=2, col = c2,add=T,medcol='blue',notch=TRUE )
+grid()
+abline(v=mean(a$value[a$gr==0 & a$L1=='m_4'],na.rm = T),col='brown')
+abline(v=mean(a$value[a$gr==1 & a$L1=='m_4'],na.rm = T),col='green')
+abline(v=mean(a2$value[a2$gr==0 & a2$L1=='m_4'],na.rm = T),col='orange')
+abline(v=mean(a2$value[a2$gr==1 & a2$L1=='m_4'],na.rm = T),col='blue')
+
+boxplot(value ~ L1 , data = melt(b[['m_8']]), horizontal = TRUE, las=2, col = c2gr, ylim=xl,medcol='black' )
+boxplot(value ~ L1 , data = melt(b2[['m_8']]), horizontal = TRUE, las=2, col = c2, add=T,medcol='blue',notch=TRUE  )
+grid()
+abline(v=mean(a$value[a$gr==0 & a$L1=='m_8'],na.rm = T),col='brown')
+abline(v=mean(a$value[a$gr==1 & a$L1=='m_8'],na.rm = T),col='green')
+abline(v=mean(a2$value[a2$gr==0 & a2$L1=='m_8'],na.rm = T),col='orange')
+abline(v=mean(a2$value[a2$gr==1 & a2$L1=='m_8'],na.rm = T),col='blue')
+
+boxplot(value ~ L1 , data = melt(b[['m_5']]), horizontal = TRUE, las=2, col = c2gr, ylim=xl,medcol='black' )
+boxplot(value ~ L1 , data = melt(b2[['m_5']]), horizontal = TRUE, las=2, col = c2, add=T,medcol='blue',notch=TRUE  )
+grid()
+abline(v=mean(a$value[a$gr==0 & a$L1=='m_5'],na.rm = T),col='brown')
+abline(v=mean(a$value[a$gr==1 & a$L1=='m_5'],na.rm = T),col='green')
+abline(v=mean(a2$value[a2$gr==0 & a2$L1=='m_5'],na.rm = T),col='orange')
+abline(v=mean(a2$value[a2$gr==1 & a2$L1=='m_5'],na.rm = T),col='blue')
+
+boxplot(value ~ L1 , data = melt(b[['m_9']]), horizontal = TRUE, las=2, col = c2gr, ylim=xl,medcol='black' )
+boxplot(value ~ L1 , data = melt(b2[['m_9']]), horizontal = TRUE, las=2, col = c2, add=T,medcol='blue',notch=TRUE  )
+grid()
+abline(v=mean(a$value[a$gr==0 & a$L1=='m_9'],na.rm = T),col='brown')
+abline(v=mean(a$value[a$gr==1 & a$L1=='m_9'],na.rm = T),col='green')
+abline(v=mean(a2$value[a2$gr==0 & a2$L1=='m_9'],na.rm = T),col='orange')
+abline(v=mean(a2$value[a2$gr==1 & a2$L1=='m_9'],na.rm = T),col='blue')
+
+boxplot(value ~ L1 , data = melt(b[['m_6']]), horizontal = TRUE, las=2, col = c2gr , ylim=xl,medcol='black')
+boxplot(value ~ L1 , data = melt(b2[['m_6']]), horizontal = TRUE, las=2, col = c2 , add=T,medcol='blue',notch=TRUE )
+grid()
+abline(v=mean(a$value[a$gr==0 & a$L1=='m_6'],na.rm = T),col='brown')
+abline(v=mean(a$value[a$gr==1 & a$L1=='m_6'],na.rm = T),col='green')
+abline(v=mean(a2$value[a2$gr==0 & a2$L1=='m_6'],na.rm = T),col='orange')
+abline(v=mean(a2$value[a2$gr==1 & a2$L1=='m_6'],na.rm = T),col='blue')
+
+boxplot(value ~ L1 , data = melt(b[['m_10']]), horizontal = TRUE, las=2, col = c2gr, ylim=xl,medcol='black' )
+boxplot(value ~ L1 , data = melt(b2[['m_10']]), horizontal = TRUE, las=2, col = c2, add=T,medcol='blue',notch=TRUE )
+grid()
+abline(v=mean(a$value[a$gr==0 & a$L1=='m_10'],na.rm = T),col='brown')
+abline(v=mean(a$value[a$gr==1 & a$L1=='m_10'],na.rm = T),col='green')
+abline(v=mean(a2$value[a2$gr==0 & a2$L1=='m_10'],na.rm = T),col='orange')
+abline(v=mean(a2$value[a2$gr==1 & a2$L1=='m_10'],na.rm = T),col='blue')
+
+boxplot(value ~ L1 , data = melt(b[['m_7']]), horizontal = TRUE, las=2, col = c2gr , ylim=xl,medcol='black')
+boxplot(value ~ L1 , data = melt(b2[['m_7']]), horizontal = TRUE, las=2, col = c2, add=T,medcol='blue',notch=TRUE )
+grid()
+abline(v=mean(a$value[a$gr==0 & a$L1=='m_7'],na.rm = T),col='brown')
+abline(v=mean(a$value[a$gr==1 & a$L1=='m_7'],na.rm = T),col='green')
+abline(v=mean(a2$value[a2$gr==0 & a2$L1=='m_7'],na.rm = T),col='orange')
+abline(v=mean(a2$value[a2$gr==1 & a2$L1=='m_7'],na.rm = T),col='blue')
+
+boxplot(value ~ L1 , data = melt(b[['m_11']]), horizontal = TRUE, las=2, col = c2gr , ylim=xl,medcol='black')
+boxplot(value ~ L1 , data = melt(b2[['m_11']]), horizontal = TRUE, las=2, col = c2, add=T,medcol='blue',notch=TRUE )
+grid()
+abline(v=mean(a$value[a$gr==0 & a$L1=='m_11'],na.rm = T),col='brown')
+abline(v=mean(a$value[a$gr==1 & a$L1=='m_11'],na.rm = T),col='green')
+abline(v=mean(a2$value[a2$gr==0 & a2$L1=='m_11'],na.rm = T),col='orange')
+abline(v=mean(a2$value[a2$gr==1 & a2$L1=='m_11'],na.rm = T),col='blue')
+
+```
+
+Furthermore we can compare the actual time series for the two intervals. The figure below shows 25 plots for each of the trials with the red color marking the 1st interval and green the 2nd. Vertical lines show boundaries for the four sub-movements within each interval, horizontal lines show means and a blue horizontal line marks the angle value in the 1st frame of the entire performance than a person is in a straight position. Horizontal axis is given in frames with sampling frequency 120 frames per second. 
+
+Green is for the thoracic/lumbar angles in the 1st interval (4-7th sub-movements; left to right bow stance); Red is for the thoracic/lumbar angles in the 2nd interval (8-11th sub-movements; right to left bow stance). 
+
+##### Thoracic - two intervals
+
+```{r }
+#cor.test(b1[b1$Var1=='id_101',3],b2[b1$Var1=='id_101',3])
+
+tdo=as.data.frame(ant4_2bow)
+
+yl=c(min(tdo$value,na.rm = T),max(tdo$value,na.rm = T))
+xl=c(0,1700)
+par(mfrow=c(5,5)) 
+par(mar=c(2.1, 1.9, 1.1, 1.9))
+for(i in 1:length(names(ant1))){
+  tN=names(ant1)[i]
+  
+  plot(tdo$value[tdo$L2==tN & tdo$L1=='m_4_7'],
+       col=rgb(1,.5,.3, alpha=1),type='l',
+       xlim=xl,ylim=yl,xaxt="n", main=tN, xlab ='', ylab ='')
+  points(tdo$value[tdo$L2==tN & tdo$L1=='m_8_11'], col=rgb(.5,1,.3, alpha=1),type='l')
+  
+  axis(side=1, at=seq(xl[1], xl[2], by=120))
+  abline(h=0)
+  abline(h=mean(tdo$value[tdo$L2==tN & tdo$L1=='m_4_7'],na.rm =T), col=rgb(1,.5,.3, alpha=0.8))
+  abline(h=mean(tdo$value[tdo$L2==tN & tdo$L1=='m_8_11'],na.rm =T), col=rgb(.5,1,.3, alpha=0.8))
+  
+  abline(v=qa[['m_4']][tN,2]-qa[['m_4']][tN,1],col=rgb(1,.5,.3, alpha=0.6))
+  abline(v=qa[['m_8']][tN,2]-qa[['m_8']][tN,1],col=rgb(.5,1,.3, alpha=0.6))
+  abline(v=qa[['m_5']][tN,2]-qa[['m_4']][tN,1],col=rgb(1,.5,.3, alpha=0.6))
+  abline(v=qa[['m_9']][tN,2]-qa[['m_8']][tN,1],col=rgb(.5,1,.3, alpha=0.6))
+  abline(v=qa[['m_6']][tN,2]-qa[['m_4']][tN,1],col=rgb(1,.5,.3, alpha=0.6))
+  abline(v=qa[['m_10']][tN,2]-qa[['m_8']][tN,1],col=rgb(.5,1,.3, alpha=0.6))
+  
+  k=which(allEvent[[tN]]==2001)# 2001start of SF WuJi
+  abline(h=allAngl[[tN]][k,'sp4_2']*180/pi, col='blue')
+  
+}
+```
+
+##### Lumbar - two intervals
+
+```{r }
+#cor.test(b1[b1$Var1=='id_101',3],b2[b1$Var1=='id_101',3])
+
+tdo=as.data.frame(ant1_2bow)
+
+yl=c(min(tdo$value,na.rm = T),max(tdo$value,na.rm = T))
+xl=c(0,1700)
+par(mfrow=c(5,5)) 
+par(mar=c(2.1, 1.9, 1.1, 1.9))
+for(i in 1:length(names(ant1))){
+  tN=names(ant1)[i]
+  
+  plot(tdo$value[tdo$L2==tN & tdo$L1=='m_4_7'],
+       col=rgb(1,.5,.3, alpha=1),type='l', ylim=yl,
+       xlim=xl,xaxt="n", main=tN, xlab ='', ylab ='')
+  points(tdo$value[tdo$L2==tN & tdo$L1=='m_8_11'], col=rgb(.5,1,.3, alpha=1),type='l')
+  
+  axis(side=1, at=seq(xl[1], xl[2], by=120))
+  abline(h=0)
+  abline(h=mean(tdo$value[tdo$L2==tN & tdo$L1=='m_4_7'],na.rm =T), col=rgb(1,.5,.3, alpha=0.8))
+  abline(h=mean(tdo$value[tdo$L2==tN & tdo$L1=='m_8_11'],na.rm =T), col=rgb(.5,1,.3, alpha=0.8))
+  
+  abline(v=qa[['m_4']][tN,2]-qa[['m_4']][tN,1],col=rgb(1,.5,.3, alpha=0.6))
+  abline(v=qa[['m_8']][tN,2]-qa[['m_8']][tN,1],col=rgb(.5,1,.3, alpha=0.6))
+  abline(v=qa[['m_5']][tN,2]-qa[['m_4']][tN,1],col=rgb(1,.5,.3, alpha=0.6))
+  abline(v=qa[['m_9']][tN,2]-qa[['m_8']][tN,1],col=rgb(.5,1,.3, alpha=0.6))
+  abline(v=qa[['m_6']][tN,2]-qa[['m_4']][tN,1],col=rgb(1,.5,.3, alpha=0.6))
+  abline(v=qa[['m_10']][tN,2]-qa[['m_8']][tN,1],col=rgb(.5,1,.3, alpha=0.6))
+  
+  k=which(allEvent[[tN]]==2001)# 2001start of SF WuJi
+  abline(h=allAngl[[tN]][k,'sp4_2']*180/pi, col='blue')
+  
+}
+```
+
+#### <a name="lN3"></a>Lateral tilt in the thoracic and lumbar areas, grouped by id-trials and sub-movements
+
+Below are boxplots for two intervals of the 2nd step that capture symmetrical body motion: from the left to right bow stance and from the right to left bow stance. The boxplots of these intervals are superimposed for each of the trials. The **1st interval is marked by green** color and the **2nd by red** (color is not associated with groups). 
+
+``` {r fig.height=18} 
+a1=cbind(qa[['m_4']][,1],qa[['m_7']][,2])
+a2=cbind(qa[['m_8']][,1],qa[['m_11']][,2])
+a1=list(m_4_7=a1,m_8_11=a2)
+ant4_2bow=f_getSubMove(a=lat4, qa=a1)
+ant4_2bow=melt(ant4_2bow)
+
+ant1_2bow=f_getSubMove(a=lat1, qa=a1)
+ant1_2bow=melt(ant1_2bow)
+
+par(mfrow=c(2,1)) 
+par(mar=c(2.5, 4.5, 1.1, 1.5))
+
+m_s_2bow=ant4_2bow
+
+boxplot(value~L2, data=m_s_2bow, subset=L1=='m_4_7', horizontal=T,las=2,col=rgb(.5,1,.3, alpha=0.6), medcol="green", varwidth=T,cex.axis=.7, main='Thoracic area, C7-T12')
+boxplot(value~L2, data=m_s_2bow, subset=L1=='m_8_11', horizontal=T,las=2,col=rgb(1,.3,.5, alpha=0.3),medcol="red",add=T, notch=TRUE, varwidth=T,cex.axis=.7)
+grid()
+
+abline(v=mean(m_s_2bow$value[m_s_2bow$L1=='m_4_7'],na.rm = T),col=rgb(.5,1,.3, alpha=0.8))
+abline(v=mean(m_s_2bow$value[m_s_2bow$L1=='m_8_11'],na.rm = T),col=rgb(1,.3,.5, alpha=0.8))
+#------------------------------Lumbar area, T12-Sacrum
+m_s_2bow=ant1_2bow
+
+boxplot(value~L2, data=m_s_2bow, subset=L1=='m_4_7', horizontal=T,las=2,col=rgb(.5,1,.3, alpha=0.6), medcol="green", varwidth=T,cex.axis=.7, main='Lumbar area, T12-Sacrum')
+boxplot(value~L2, data=m_s_2bow, subset=L1=='m_8_11', horizontal=T,las=2,col=rgb(1,.3,.5, alpha=0.3),medcol="red",add=T, notch=TRUE, varwidth=T,cex.axis=.7)
+grid()
+
+abline(v=mean(m_s_2bow$value[m_s_2bow$L1=='m_4_7'],na.rm = T),col=rgb(.5,1,.3, alpha=0.8))
+abline(v=mean(m_s_2bow$value[m_s_2bow$L1=='m_8_11'],na.rm = T),col=rgb(1,.3,.5, alpha=0.8))
+
+```
+
+Also, we can differentiate between the different sub-movements within the two intervals and look at them individually. Below are two columns of the boxplots with 4 rows that represent consecutive phases of our two intervals. The 1st column represents the movement from the left to right bow stance (4th - 7th sub-movements), the 2nd column represents the movement from the right to left bow stance (8th - 11th sub-movements).
+
+Brown and green color mark data of the thoracic angles for the 1st and 2nd group. Pale semi-transparent yellow and cyan-green colors mark angles of the lumbar for the 1st and 2nd group.
+
+```{r fig.height=23}
+#print boxplot of trial's mean-values for each sub-movement
+par(mfrow=c(4,2)) 
+par(mar=c(4.5, 4.5, 0.5, 1.5))
+a=m_tList[['lat4']]
+b=tList[['lat4']]
+
+a2=m_tList[['lat1']]
+b2=tList[['lat1']]
+
+c2=c(rgb(1, .9, .1, alpha=.5),rgb(.1, 1, .8, alpha=.5))
+c2=c(replicate(l1,c2[1]),replicate(l2,c2[2]))
+
+xl=c(min(a$value,na.rm = T),max(a$value,na.rm = T),
+     min(a2$value,na.rm = T),max(a2$value,na.rm = T))
+xl=c(min(xl),max(xl))
+#boxplot for mean-values of all sub-movements for each trial
+boxplot(value ~ L1 , data = melt(b[['m_4']]), horizontal = TRUE, las=2, col = c2gr, ylim=xl,medcol='black')
+boxplot(value ~ L1 , data = melt(b2[['m_4']]), horizontal = TRUE, las=2, col = c2,add=T,medcol='blue',notch=TRUE )
+grid()
+abline(v=mean(a$value[a$gr==0 & a$L1=='m_4'],na.rm = T),col='brown')
+abline(v=mean(a$value[a$gr==1 & a$L1=='m_4'],na.rm = T),col='green')
+abline(v=mean(a2$value[a2$gr==0 & a2$L1=='m_4'],na.rm = T),col='orange')
+abline(v=mean(a2$value[a2$gr==1 & a2$L1=='m_4'],na.rm = T),col='blue')
+
+boxplot(value ~ L1 , data = melt(b[['m_8']]), horizontal = TRUE, las=2, col = c2gr, ylim=xl,medcol='black' )
+boxplot(value ~ L1 , data = melt(b2[['m_8']]), horizontal = TRUE, las=2, col = c2, add=T,medcol='blue',notch=TRUE  )
+grid()
+abline(v=mean(a$value[a$gr==0 & a$L1=='m_8'],na.rm = T),col='brown')
+abline(v=mean(a$value[a$gr==1 & a$L1=='m_8'],na.rm = T),col='green')
+abline(v=mean(a2$value[a2$gr==0 & a2$L1=='m_8'],na.rm = T),col='orange')
+abline(v=mean(a2$value[a2$gr==1 & a2$L1=='m_8'],na.rm = T),col='blue')
+
+boxplot(value ~ L1 , data = melt(b[['m_5']]), horizontal = TRUE, las=2, col = c2gr, ylim=xl,medcol='black' )
+boxplot(value ~ L1 , data = melt(b2[['m_5']]), horizontal = TRUE, las=2, col = c2, add=T,medcol='blue',notch=TRUE  )
+grid()
+abline(v=mean(a$value[a$gr==0 & a$L1=='m_5'],na.rm = T),col='brown')
+abline(v=mean(a$value[a$gr==1 & a$L1=='m_5'],na.rm = T),col='green')
+abline(v=mean(a2$value[a2$gr==0 & a2$L1=='m_5'],na.rm = T),col='orange')
+abline(v=mean(a2$value[a2$gr==1 & a2$L1=='m_5'],na.rm = T),col='blue')
+
+boxplot(value ~ L1 , data = melt(b[['m_9']]), horizontal = TRUE, las=2, col = c2gr, ylim=xl,medcol='black' )
+boxplot(value ~ L1 , data = melt(b2[['m_9']]), horizontal = TRUE, las=2, col = c2, add=T,medcol='blue',notch=TRUE  )
+grid()
+abline(v=mean(a$value[a$gr==0 & a$L1=='m_9'],na.rm = T),col='brown')
+abline(v=mean(a$value[a$gr==1 & a$L1=='m_9'],na.rm = T),col='green')
+abline(v=mean(a2$value[a2$gr==0 & a2$L1=='m_9'],na.rm = T),col='orange')
+abline(v=mean(a2$value[a2$gr==1 & a2$L1=='m_9'],na.rm = T),col='blue')
+
+boxplot(value ~ L1 , data = melt(b[['m_6']]), horizontal = TRUE, las=2, col = c2gr , ylim=xl,medcol='black')
+boxplot(value ~ L1 , data = melt(b2[['m_6']]), horizontal = TRUE, las=2, col = c2 , add=T,medcol='blue',notch=TRUE )
+grid()
+abline(v=mean(a$value[a$gr==0 & a$L1=='m_6'],na.rm = T),col='brown')
+abline(v=mean(a$value[a$gr==1 & a$L1=='m_6'],na.rm = T),col='green')
+abline(v=mean(a2$value[a2$gr==0 & a2$L1=='m_6'],na.rm = T),col='orange')
+abline(v=mean(a2$value[a2$gr==1 & a2$L1=='m_6'],na.rm = T),col='blue')
+
+boxplot(value ~ L1 , data = melt(b[['m_10']]), horizontal = TRUE, las=2, col = c2gr, ylim=xl,medcol='black' )
+boxplot(value ~ L1 , data = melt(b2[['m_10']]), horizontal = TRUE, las=2, col = c2, add=T,medcol='blue',notch=TRUE )
+grid()
+abline(v=mean(a$value[a$gr==0 & a$L1=='m_10'],na.rm = T),col='brown')
+abline(v=mean(a$value[a$gr==1 & a$L1=='m_10'],na.rm = T),col='green')
+abline(v=mean(a2$value[a2$gr==0 & a2$L1=='m_10'],na.rm = T),col='orange')
+abline(v=mean(a2$value[a2$gr==1 & a2$L1=='m_10'],na.rm = T),col='blue')
+
+boxplot(value ~ L1 , data = melt(b[['m_7']]), horizontal = TRUE, las=2, col = c2gr , ylim=xl,medcol='black')
+boxplot(value ~ L1 , data = melt(b2[['m_7']]), horizontal = TRUE, las=2, col = c2, add=T,medcol='blue',notch=TRUE )
+grid()
+abline(v=mean(a$value[a$gr==0 & a$L1=='m_7'],na.rm = T),col='brown')
+abline(v=mean(a$value[a$gr==1 & a$L1=='m_7'],na.rm = T),col='green')
+abline(v=mean(a2$value[a2$gr==0 & a2$L1=='m_7'],na.rm = T),col='orange')
+abline(v=mean(a2$value[a2$gr==1 & a2$L1=='m_7'],na.rm = T),col='blue')
+
+boxplot(value ~ L1 , data = melt(b[['m_11']]), horizontal = TRUE, las=2, col = c2gr , ylim=xl,medcol='black')
+boxplot(value ~ L1 , data = melt(b2[['m_11']]), horizontal = TRUE, las=2, col = c2, add=T,medcol='blue',notch=TRUE )
+grid()
+abline(v=mean(a$value[a$gr==0 & a$L1=='m_11'],na.rm = T),col='brown')
+abline(v=mean(a$value[a$gr==1 & a$L1=='m_11'],na.rm = T),col='green')
+abline(v=mean(a2$value[a2$gr==0 & a2$L1=='m_11'],na.rm = T),col='orange')
+abline(v=mean(a2$value[a2$gr==1 & a2$L1=='m_11'],na.rm = T),col='blue')
+
+```
+
+Furthermore we can compare the actual time series for the two intervals. The figure below shows 25 plots for each of the trials with the red color marking the 1st interval and green the 2nd. Vertical lines show boundaries for the four sub-movements within each interval, horizontal lines show means and a blue horizontal line marks the angle value in the 1st frame of the entire performance than a person is in a straight position. Horizontal axis is given in frames with sampling frequency 120 frames per second. 
+
+Green is for the thoracic/lumbar angles in the 1st interval (4-7th sub-movements; left to right bow stance); Red is for the thoracic/lumbar angles in the 2nd interval (8-11th sub-movements; right to left bow stance).
+
+##### Thoracic - two intervals
+
+```{r }
+#cor.test(b1[b1$Var1=='id_101',3],b2[b1$Var1=='id_101',3])
+
+tdo=as.data.frame(ant4_2bow)
+
+yl=c(min(tdo$value,na.rm = T),max(tdo$value,na.rm = T))
+xl=c(0,1700)
+par(mfrow=c(5,5)) 
+par(mar=c(2.1, 1.9, 1.1, 1.9))
+for(i in 1:length(names(ant1))){
+  tN=names(ant1)[i]
+  
+  plot(tdo$value[tdo$L2==tN & tdo$L1=='m_4_7'],
+       col=rgb(1,.5,.3, alpha=1),type='l',ylim=yl,
+       xlim=xl,xaxt="n", main=tN, xlab ='', ylab ='')
+points(tdo$value[tdo$L2==tN & tdo$L1=='m_8_11'], col=rgb(.5,1,.3, alpha=1),type='l')
+  
+  axis(side=1, at=seq(xl[1], xl[2], by=120))
+  abline(h=0)
+  abline(h=mean(tdo$value[tdo$L2==tN & tdo$L1=='m_4_7'],na.rm =T), col=rgb(1,.5,.3, alpha=0.8))
+  abline(h=mean(tdo$value[tdo$L2==tN & tdo$L1=='m_8_11'],na.rm =T), col=rgb(.5,1,.3, alpha=0.8))
+  
+  abline(v=qa[['m_4']][tN,2]-qa[['m_4']][tN,1],col=rgb(1,.5,.3, alpha=0.6))
+  abline(v=qa[['m_8']][tN,2]-qa[['m_8']][tN,1],col=rgb(.5,1,.3, alpha=0.6))
+  abline(v=qa[['m_5']][tN,2]-qa[['m_4']][tN,1],col=rgb(1,.5,.3, alpha=0.6))
+  abline(v=qa[['m_9']][tN,2]-qa[['m_8']][tN,1],col=rgb(.5,1,.3, alpha=0.6))
+  abline(v=qa[['m_6']][tN,2]-qa[['m_4']][tN,1],col=rgb(1,.5,.3, alpha=0.6))
+  abline(v=qa[['m_10']][tN,2]-qa[['m_8']][tN,1],col=rgb(.5,1,.3, alpha=0.6))
+  
+  k=which(allEvent[[tN]]==2001)# 2001start of SF WuJi
+  abline(h=allAngl[[tN]][k,'su4_2']*180/pi, col='blue')
+  
+}
+```
+
+##### Lumbar - two intervals
+
+```{r }
+#cor.test(b1[b1$Var1=='id_101',3],b2[b1$Var1=='id_101',3])
+
+tdo=as.data.frame(ant1_2bow)
+
+yl=c(min(tdo$value,na.rm = T),max(tdo$value,na.rm = T))
+xl=c(0,1700)
+par(mfrow=c(5,5)) 
+par(mar=c(2.1, 1.9, 1.1, 1.9))
+for(i in 1:length(names(ant1))){
+  tN=names(ant1)[i]
+  
+  plot(tdo$value[tdo$L2==tN & tdo$L1=='m_4_7'],
+       col=rgb(1,.5,.3, alpha=1),type='l',
+       xlim=xl,ylim=yl,xaxt="n", main=tN, xlab ='', ylab ='')
+points(tdo$value[tdo$L2==tN & tdo$L1=='m_8_11'], col=rgb(.5,1,.3, alpha=1),type='l')
+  
+  axis(side=1, at=seq(xl[1], xl[2], by=120))
+  abline(h=0)
+  abline(h=mean(tdo$value[tdo$L2==tN & tdo$L1=='m_4_7'],na.rm =T), col=rgb(1,.5,.3, alpha=0.8))
+  abline(h=mean(tdo$value[tdo$L2==tN & tdo$L1=='m_8_11'],na.rm =T), col=rgb(.5,1,.3, alpha=0.8))
+  
+  abline(v=qa[['m_4']][tN,2]-qa[['m_4']][tN,1],col=rgb(1,.5,.3, alpha=0.6))
+  abline(v=qa[['m_8']][tN,2]-qa[['m_8']][tN,1],col=rgb(.5,1,.3, alpha=0.6))
+  abline(v=qa[['m_5']][tN,2]-qa[['m_4']][tN,1],col=rgb(1,.5,.3, alpha=0.6))
+  abline(v=qa[['m_9']][tN,2]-qa[['m_8']][tN,1],col=rgb(.5,1,.3, alpha=0.6))
+  abline(v=qa[['m_6']][tN,2]-qa[['m_4']][tN,1],col=rgb(1,.5,.3, alpha=0.6))
+  abline(v=qa[['m_10']][tN,2]-qa[['m_8']][tN,1],col=rgb(.5,1,.3, alpha=0.6))
+  
+  k=which(allEvent[[tN]]==2001)# 2001start of SF WuJi
+  abline(h=allAngl[[tN]][k,'su1_2']*180/pi, col='blue', lty=2)
+  
+}
+```
+
+

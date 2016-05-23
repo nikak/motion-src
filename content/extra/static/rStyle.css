@@ -103,6 +103,11 @@ body div.container h5 a, body div.container h6 a {
 	text-decoration: none;
 }
 
+body div.container p a {
+	color: #4285F4;
+	text-decoration: none;
+}
+
 body div.container * a:hover {
 	color: #ff7200; /*#36bcab;*/
 }
@@ -144,4 +149,39 @@ img:not(.dygraph-rangesel-zoomhandle) {
   src: local('Oswald Regular'), local('Oswald-Regular'), url(http://fonts.gstatic.com/s/oswald/v10/_P8jt3Y65hJ9c4AzRE0V1OvvDin1pK8aKteLpeZ5c0A.woff2) format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2212, U+2215, U+E0FF, U+EFFD, U+F000;
 }
+/* =pander tables >> works only with p.p_caption tag before!!
+----------------------------------------------- */
+.p_caption {
+    padding-top: 8px;
+    padding-bottom: 8px;
+    color: #b3b3b3;
+    text-align: left;
+    /*display: table-caption;*/
+    border-collapse: collapse;
+}
 
+p.p_caption + table { /*, div.highlight + table >> if echo=true*/
+    width: 100%;
+    max-width: 100%;
+    margin-bottom: 22px;
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+p.p_caption + table>thead>tr, p.p_caption + table>tbody>tr, p.p_caption + table>tfoot>tr, p.p_caption + table>thead>tr, p.p_caption + table>tbody>tr, p.p_caption + table>tfoot>tr {
+    display: table-row;
+    vertical-align: inherit;
+    border-color: inherit;
+}
+
+p.p_caption + table>thead>tr:hover, p.p_caption + table>tbody>tr:hover, p.p_caption + table>tfoot>tr:hover, p.p_caption + table>thead>tr:hover, p.p_caption + table>tbody>tr:hover, p.p_caption + table>tfoot>tr:hover {
+    background-color: rgba(193, 177, 177, 0.34);
+}
+
+p.p_caption + table>thead>tr>th, p.p_caption + table>tbody>tr>th, p.p_caption + table>tfoot>tr>th, p.p_caption + table>thead>tr>td, p.p_caption + table>tbody>tr>td, p.p_caption + table>tfoot>tr>td {
+    padding: 8px;
+    line-height: 1.42857143;
+    vertical-align: top;
+    border-top: 1px solid #dddddd;
+    padding: 5px;
+    text-align: center !important;
+}

@@ -1,0 +1,907 @@
+---
+Title: Relative Movement of the Upper Arms relative to the vertical Orientation of the Ribcage
+Category: Summary Stats
+Menulabel: Posture
+Tags: summary posture, lateral tilting, vertical, upper arms, upper body, arms
+Slug: relative-movement-of-the-upper-arms-to-the-vertical-orientation-of-the-ribcage
+Authors: Nicolek
+Summary:  Summary statistics for the vertical motion of the upper arms during the 2nd step of the Tai Chi Short Form
+Series: Arms
+series_index: 4
+output: 
+  html_document:
+    theme: readable
+    highlight: pygments
+    css: theme/css/rStyle.css
+---
+
+```{r, echo=FALSE, cache=FALSE, include=FALSE}
+#after tags>>
+#Slug: relative-movement-of-the-clavicles-in-the-horisontal-plane
+#date after title >> Date: 2010-12-03 10:20
+#after date >> Modified: '`r format(Sys.Date(), "%B %d, %Y")`'
+
+
+library(knitr)
+#opts_knit$set( progress = TRUE, verbose = TRUE)
+knitr::opts_chunk$set(echo=F, warning=F,message=F, prompt=F, error=F)#
+#knitr::opts_chunk$set(results="asis")# true is default behaviour
+knitr::opts_chunk$set(fig.width=15,  fig.height = 15)
+knitr::opts_chunk$set(dev = 'svg')
+knitr::opts_chunk$set(dpi = 130)
+##echo=FALSE, results='hide', warning=F, message=FALSE
+
+```
+
+
+<!---
+## This was load_s_0.R inside the /Users/nk/Documents/devPro/R-home/3d/scripts folder
+## ---------------------------------------------
+## running time: 1.71438578367233
+## we selected 2nd SF step for all trials
+## SF step: 2, sub-movements: 0
+## we padded with 10 frames on the left&right sides for boundary effects
+## mallAngl, mallCent, mallEvent were updated to the selected time interval
+## mallAngl_alig, mallCent_alig, mallEvent_alig are dtw alighned after (centerRFoot_2+centerLFoot_2)
+## InBowStance has selected time intervals for Left to Right BS for alighned data
+## mallAnglD, mallCentD are downsampled (frd=15) and not aligned
+## mallAngl_aligD, mallCent_aligD are downsampled and aligned
+## This was load_s_0_st2_calc0.R inside the /Users/nk/Documents/devPro/R-home/3d/scripts folder
+## ---------------------------------------------
+## toc: true
+##rmarkdown::render(input='/Users/nk/Documents/devPro/R-home/3d/markdown/summaryStatistics/upperArms_2.Rmd',output_file='upperArms_2.html',envir=globalenv())
+-->
+
+
+```{r include=FALSE, cache=FALSE}
+
+ load("/Users/nk/Documents/devPro/R-home/3d/all_load_s_0_st2_calc0.RData", .GlobalEnv)
+ 
+ require(sm)
+ require(pander)
+ require(reshape2)
+ sm.options(verbose=0)
+ #class="table table-condensed" and <caption> should be inside table but doesn't work with rmd_reader?
+ # panderOptions("table.split.table", Inf)  ## don't split tables
+ # panderOptions('knitr.auto.asis', FALSE)
+ 
+```
+
+
+```{r include=FALSE, cache=FALSE}
+normAngl=function(ang){
+if(is.finite(ang)){
+# reduce the angle  
+ang =  ang %% (2*pi); 
+#force it to be the positive remainder, so that 0 <= angle < 360  
+ang = (ang + (2*pi)) %% (2*pi); 
+#force into the minimum absolute value residue class, so that -180 < angle <= 180  
+if (ang > pi)ang= ang-(2*pi);
+return(ang);
+}else return(ang)
+}
+
+# returns a nested lists: 1st level for sub-moves, 2nd level for trials
+f_getSubMove=function(ang, qa){
+  #ang is a 25-list with [1-col-marker and rows-frames] vectors
+  mNames=names(qa)#sub_moves
+  move=lapply(X=mNames,FUN=f_get1SubMove,ang=ang,qa=qa)
+  #str(lapply(X=names(qa),FUN=f_get1SubMove,ang=rdif1,qa=qa)) 
+  #>> returns 11-list with each 25-list, each with data vector
+  names(move)=names(qa);
+  return(move)
+}
+
+f_get1SubMove=function(subMov, ang, qa){
+#f_get1SubMove('m_1',a=rdif1,qa)
+#subMove is the number or string for the sub-move
+#qa is a list for all 11 sub-moves; each with 25-id-rows by 2 [end, start] of the frame columns
+#ang is a 25-list with [1-col-marker and rows-frames] vectors
+    idNames=rownames(qa[[subMov]])#id_trials
+    move2=lapply(X=idNames, FUN = f_getSubInterval,subMov,ang,qa=qa)
+    #lapply(X=rownames(qa[['m_1']]), FUN = f_getSubInterval,subMov='m_1',ang=rdif1,qa=qa)[[1]][1:2]
+    #lapply(X=rownames(qa[[1]]), FUN = f_getSubInterval,subMov=1,ang=rdif1,qa=qa)[[1]][1:2]
+    #returns list of 25 with each being vector of time series for subMov
+    
+    names(move2)=names(ang);
+    return(move2)
+}
+
+f_getSubInterval = function(idN,subMov,ang,qa){
+  #subMove is the number or string for the sub-move
+  #idN is a paricular trial id
+  # cat(sprintf('idN=%s\n',idN))
+  # cat(sprintf('subMov=%s\n',subMov))
+      movSt=qa[[subMov]][idN,1];#-buff; 
+      movEn=qa[[subMov]][idN,2];#+buff;
+      return(ang[[idN]][movSt:movEn])
+}
+
+
+#add 'gr' variable as a group factor (all id_1* >> 0 and all id_2* >> 1)
+adGrF=function(a){
+  k=array(dim=length(a[,1])); 
+  k[grep('id_1',a[,'Var1'])]=0; 
+  k[grep('id_2',a[,'Var1'])]=1; 
+  a=cbind(a,gr=k)
+  return(a)
+}
+
+f_getSubMove_collection=function(angCollect, qa){
+  #tList >> a collection of 25-lists with vectors (single marker-dim like rdif1)
+  #tList=list(rdif1,ldif1,sdif1)
+  #tList=lapply(X = angCollect,FUN = f_getSubMove,qa=qa)
+  m_tList=lapply(X = tList,FUN = melt)
+  names(m_tList)=names(angCollect)#c('rdif1','ldif1','sdif1')
+  lapply(X = m_tList,FUN = function(X){
+    colnames(X)=c('value','Var1','L1')
+    X$Var1=factor(X$Var1)
+    X$L1=factor(X$L1)
+    X=adGrF(X)
+  })
+}
+#------------------------------------------------------
+#------1 verticals
+#Elevation/depression right shoulder 
+# (p/2+x[,'su4_2']) 30toright>>-30
+rdif1=lapply(X=mallAngl, FUN=function(x){a=(x[,'mRELBOW_2']+x[,'su4_2']);
+a=180/pi*(a)
+#a=180/pi*normAngl(a)
+return(a);})
+#Elevation/depression left shoulder 
+ldif1=lapply(X=mallAngl, FUN=function(x){a=(x[,'mLELBOW_2']-x[,'su4_2']);
+a=180/pi*(a)
+#a=180/pi*normAngl(a)
+return(a);})
+#Symmetry in elevation/depression  
+sdif1=lapply(X=mallAngl, FUN=function(x){a=(x[,'mRELBOW_2']-x[,'mLELBOW_2']);
+a=180/pi*(a)
+#a=180/pi*normAngl(a)
+return(a);})
+
+tList=list(rdif1,ldif1,sdif1)
+names(tList)=c('rdif1','ldif1','sdif1')
+
+gr1Names=grep('id_1',names(rdif1))
+gr2Names=grep('id_2',names(rdif1))
+l1=length(gr1Names)
+l2=length(gr2Names)
+c2gr=c(replicate(l1,'brown'),replicate(l2,'green'))
+
+# find indexes for all avaliable sub-movement eventCodes for each of the 25 persons
+# we should get 12x25 matrix for 11 sub-movements of the 2nd step of the Short Form
+eventIndexes=sapply(mallEvent,FUN=function(x){which(x>0)})
+# create a list with each element being a 25x2 matrix with
+# rows for each trial and 2 columns for their frames for end/str of the sub-movement
+qa=lapply(X=1:length(eventIndexes[,1]),FUN=function(X,a){if(X<length(a[,1]))
+    return(cbind(a[X,],a[(X+1),]))},a=eventIndexes)
+qa[12]=NULL; names(qa)=paste('m',1:length(qa),sep='_')
+#------------------------------------------------------
+#new code
+tList=lapply(X = tList,FUN = f_getSubMove,qa=qa)
+m_tList=f_getSubMove_collection(tList, qa)
+#------------------------------------------------------
+#code 2001 values at the beginning of the form
+#values at the beginning of the form
+t2001=sapply(X = names(rdif1),FUN = function(X,a1,a2){
+  k=which(a2[[X]]==2001)# 2001start of SF WuJi
+  
+  h4=a1[[X]][k,'mRELBOW_2']+a1[[X]][k,'su4_2']
+  #h4=180/pi*normAngl(h4)
+  h4=180/pi*(h4)
+  
+  h5=a1[[X]][k,'mLELBOW_2']-a1[[X]][k,'su4_2']
+  #h5=180/pi*normAngl(h5)
+  h5=180/pi*(h5)
+  
+  h6=a1[[X]][k,'mRELBOW_2']-a1[[X]][k,'mLELBOW_2']
+  #h6=180/pi*normAngl(h6)
+  h6=180/pi*(h6)
+
+  h=cbind(h4,h5,h6)
+  return(h)
+},a1=allAngl,a2=allEvent)
+
+t2001=t(t2001)#1 is azimuth, 2 is elevation
+colnames(t2001)=names(tList)#c('mRELBOW_1','mRELBOW_2','mLELBOW_1','mLELBOW_2','sp5_1','su4_2')
+t2001=cbind(t2001,gr=c(replicate(length(gr1Names),0),replicate(length(gr2Names),1)))
+t2001=as.data.frame(t2001, optional = F)
+#------------------------------------------------------
+#spine as reference
+rbLE=lapply(X=mallAngl, FUN=function(x){a=(x[,'su4_2']*180/pi);})
+rbLE_2bow=f_getSubMove(a=rbLE, qa=qa)#only lateral angles for ribcage
+rbLE_2bow=melt(rbLE_2bow)
+
+```
+
+
+# How the upper arms move relatively to the ribcage in the vertical direction?
+
+We need to look at upper arm representations that are given by two lines that connect marker bony parts of the shoulder joints (RSH and LSH) and mid elbow markers (mRELBOW and mLELBOW). These two lines (for right and left) reflect motion of the upper arms. Thus we can estimate their vertical movement in relation to the ribcage by looking at elevation angles between the ribcage and these lines.
+
+For the ribcage representation we take the spinal plane that represents the mid part of the ribcage (4th). This plane models a part between T7 to T12 vertebras, is perpendicular to the T12L4 line with the forward orientation that is defined by the bottom sternum marker. Thus the elevation angles are given by the 'su' points that define a lateral tilt of the ribcage (su4_2). As the 'su' points are defined on the left side of the body (positive Y-axis) we need to calculate left and right angles differently to get an estimate of how left and right upper arms are moving up and down relatively to the ribcage. For the left side we use (mLELBOW_2 - su4_2) and the right side (mRELBOW_2 + su4_2).
+
+## Summary. Motion of the upper arms relative to the vertical orientation of the ribcage
+
+The difference in the elevation angles (mRELBOW_2-su4_2 and mLELBOW_2-su4_2) are measured relatively to the lateral elevation angle of the 4th spinal plane. So for example positive value for the arm indicates that the upper arm and the ribcage build an upward angle (the arm is raised up) whereas negative value indicate the downward angle; in other words the increasing positive value and the decreasing negative value corresponds to the upwards motion of the arm and the reverse to the downwards motion of the arm. 
+
+For the elevation angles in the 11 sub-movements we can see that in the 1st group the arms are more down (about 1 degrees) than in the 2nd and in both groups the left arm is more down (about 7.7 and 5.6 degrees in the 1st and 2nd groups correspondingly). This difference is likely to be rooted in the fact that than the sub-movements from 4th to 11th are symmetrical, the sub-movements from 1st to 3rd have the right arm higher than the left.
+
+<p class='p_caption'>Elevation (mRELBOW - T7T12) >> 2nd step SF, 11 sub-movements</p>
+``` {r } 
+#right upper arm and upper chest 
+a=m_tList[['rdif1']]
+
+a1=describe(a[a$gr==0,1])
+a2=describe(a[a$gr==1,1])
+#c('mRELBOW_1','mRELBOW_2','mLELBOW_1','mLELBOW_2','sp5_1','su4_2')
+a1=rbind(a1,a2,describe(t2001$rdif1[t2001$gr==0]),
+         describe(t2001$rdif1[t2001$gr==1])); 
+rownames(a1)=c('1st group', '2nd group','2001-1st','2001-2nd')
+#set.caption('Elevation (mRELBOW - T7T12) >> 2nd step SF, 11 sub-movements')
+pander(a1, use.hyphening = TRUE, style='rmarkdown')
+```
+
+<p class='p_caption'>Elevation (mLELBOW - T7T12) >> 2nd step SF, 11 sub-movements</p>
+``` {r } 
+a=m_tList[['ldif1']]
+a1=describe(a[a$gr==0,1])
+a2=describe(a[a$gr==1,1])
+a1=rbind(a1,a2,describe(t2001$ldif1[t2001$gr==0]),
+         describe(t2001$ldif1[t2001$gr==1])); 
+rownames(a1)=c('1st group', '2nd group','2001-1st','2001-2nd')
+#set.caption('Elevation (mLELBOW - T7T12) >> 2nd step SF, 11 sub-movements')
+pander(a1, use.hyphening = TRUE, style='rmarkdown')
+```
+
+<p class='p_caption'>Elevation (mRELBOW - mLELBOW) >> 2nd step SF, 11 sub-movements</p>
+``` {r } 
+a=m_tList[['sdif1']]
+a1=describe(a[a$gr==0,1])
+a2=describe(a[a$gr==1,1])
+a1=rbind(a1,a2,describe(t2001$sdif1[t2001$gr==0]),
+         describe(t2001$sdif1[t2001$gr==1])); 
+rownames(a1)=c('1st group', '2nd group','2001-1st','2001-2nd')
+#set.caption('Elevation (mRELBOW - mLELBOW) >> 2nd step SF, 11 sub-movements')
+pander(a1, use.hyphening = TRUE, style='rmarkdown')
+```
+
+``` {r } 
+#right elevation
+a=m_tList[['rdif1']]
+par(mfrow=c(6,2)) 
+par(mar=c(2.5, 2.5, 1.1, 1.5),bty="n")
+
+sm.density.compare(a$value[is.finite(a$value)], a$gr, xlab="degrees",col=c("brown", "green"))
+legend("topright", legend=c("1st group", "2nd group"),col=c("brown", "green"), lty=1:2, cex=0.5,box.lty=0)
+title(main='Elevation (mRELBOW - T7T12) >> 11th')
+grid()
+abline(v=describe(a[a$gr==0,1])[1],col='brown')
+abline(v=describe(a[a$gr==1,1])[1],col='green')
+
+hist(a[,1],main='all trials >> 11 sub-movements')
+
+#tempFr=as.data.frame(cbind(val=t2001$sp5_1-t2001$mRELBOW_1,gr=t2001$gr))
+sm.density.compare(t2001$rdif1, t2001$gr, xlab="degrees",col=c("brown", "green"))
+title(main='frame 2001')
+legend("topright", legend=c("1st group", "2nd group"),col=c("brown", "green"), lty=1:2, cex=0.5,box.lty=0)
+grid()
+
+abline(v=describe(t2001$rdif1[t2001$gr==0])[1],col='brown')
+abline(v=describe(t2001$rdif1[t2001$gr==1])[1],col='green')
+
+hist(t2001$rdif1,main='all trials >> 2001')
+#
+#--------------------------------------------left
+a=m_tList[['ldif1']]
+sm.density.compare(a$value[is.finite(a$value)], a$gr, xlab="degrees",col=c("brown", "green"))
+legend("topright", legend=c("1st group", "2nd group"),col=c("brown", "green"), lty=1:2, cex=0.5,box.lty=0)
+title(main='Elevation (mLELBOW - T7T12) >> 11 sub-movements')
+grid()
+abline(v=describe(a[a$gr==0,1])[1],col='brown')
+abline(v=describe(a[a$gr==1,1])[1],col='green')
+
+hist(a[,1],main='all trials >> 11 sub-movements')
+
+sm.density.compare(t2001$ldif1, t2001$gr, xlab="degrees",col=c("brown", "green"))
+title(main='frame 2001')
+legend("topright", legend=c("1st group", "2nd group"),col=c("brown", "green"), lty=1:2, cex=0.5,box.lty=0)
+grid()
+abline(v=describe(t2001$ldif1[t2001$gr==0])[1],col='brown')
+abline(v=describe(t2001$ldif1[t2001$gr==1])[1],col='green')
+
+hist(t2001$ldif1,main='all trials >> 2001')
+
+#--------------------------------------------azimuth (mRELBOW-mLELBOW)
+a=m_tList[['sdif1']]
+sm.density.compare(a$value[is.finite(a$value)], a$gr, xlab="degrees",col=c("brown", "green"))
+legend("topright", legend=c("1st group", "2nd group"),col=c("brown", "green"), lty=1:2, cex=0.5,box.lty=0)
+title(main='Elevation (mRELBOW-mLELBOW) >> 11 sub-movements')
+grid()
+abline(v=describe(a[a$gr==0,1])[1],col='brown')
+abline(v=describe(a[a$gr==1,1])[1],col='green')
+
+hist(a[,1],main='all trials >> 11 sub-movements')
+
+sm.density.compare(t2001$sdif1, t2001$gr, xlab="degrees",col=c("brown", "green"))
+
+title(main='frame 2001')
+legend("topright", legend=c("1st group", "2nd group"),col=c("brown", "green"), lty=1:2, cex=0.5,box.lty=0)
+grid()
+abline(v=describe(t2001$sdif1[t2001$gr==0])[1],col='brown')
+abline(v=describe(t2001$sdif1[t2001$gr==1])[1],col='green')
+hist(t2001$sdif1,main='all trials >> 2001')
+
+```
+
+Than data of the 4th to 11th sub-movements is grouped [by trial identities](#pN1) the 2nd group seems to have trials whose value ranges for the right upper arm deviate less from each other than the 1st group (e.g. green boxplots are less spread out comparing to brown). In the density plots that take only 2 symmetrical intervals (4th-11th sub-movements) we can notice that most of the trials have 2 small peaks for the left and right sides that might be connected to the fact that we have 2 prominent positions for the arms: reaching forward at chest level and being down. 
+
+Than data is grouped [by 11 sub-movements](#pN2) as expected we can notice that arm values vary depending on the sub-movements and that the right upper arm in the 3th-7th sub-movements is lover in the 1st group than in the 2nd. For the 1st, 2nd, 9th and 10th sub-movements the right arm is lower in the 2nd group. The left arm in the 1st-4th, 11th, 8th and 9th sub-movements is lover in the 1st group than in the 2nd. The density plots describe the situation more clearly; as expected we see similarities between two laterally symmetrical intervals: 2nd row for the right resembles the 3rd row for the left (also the 1st for the left) and 3rd row for the right (with the 1st row except the 1st sub-movement ‘m_1’) resembles the 2nd row for the left. We also can notice that the forward reaching arm (the right arm in the 1st interval, 2nd row and the left arm in the 2nd interval, 3rd row) is higher in the 2nd group than in the 1st group. In contrast the arm that is directed down (the right arm in the 2nd interval, 3rd row and the left arm in the 1st interval, 2nd row) is higher in the 1st group than in the 2nd group.
+
+Similarly than data is grouped [by two intervals](#pN3) we can see that values for the right arm are consistently higher in the 1st interval (e.g. all red boxplots are shifted to the right from the green boxplots). And reversely values for the left arm are higher in the 2nd interval (e.g. all green boxplots are shifted to the right from the green boxplots). These relations can be explained by the lateral symmetry of the movements in 2 intervals: movement of the right arm in the 1st becomes movement of the left in the 2nd interval and vice versa. Even more clearly we can see this in the 4 x 2 boxplot panel for each of the 4 phases of the intervals. Also we can see how within one interval position of the arms swap with each other and the arm that was down becomes forward reaching and vice versa. In the last phase of intervals there is clearly more vertical movement for the forward reaching arm than the other (the right for the 1st and left for 2nd interval).
+
+Furthermore if we look [at time series](#pN3) we can notice in most of the trials a clear correlation between the right and left arms in two intervals (light green and red, orange and dark green). In the next [plot panel](#pN3_p2) we can see how the difference angle between elevation angles of the right and left upper arms (olive for the 1st interval and pink for the 2nd) and the lateral elevation angles of the ribcage (light and dark grey for the 1st and 2nd intervals) look like.
+
+#### <a name="pN1"></a>Motion of the upper arms relative to the vertical orientation of the ribcage, grouped by id-trials
+
+Below are boxplots of the upper arm angles relative to the ribcage across different trials for the 11 sub-movements in the 2nd step of the Short Form. Brown color represents the 1st group and green the 2nd. Horizontal axes are given in degrees of the angles; the vertical axes represent grouping factor – identity of the trial. The 1st row is for the right and left angles relative to lateral tilting of the ribcage and the 2nd row is for the difference between right and left shoulders and for the lateral tilting of the ribcage.
+
+``` {r } 
+par(mfrow=c(2,2)) 
+par(mar=c(2.5, 4.5, 1.1, 1.5))
+a=m_tList[['rdif1']]
+ 
+boxplot(value ~ Var1 , data = a,horizontal = TRUE, las=2, col = c2gr,cex.axis=.7, 
+        main='mRELBOW - T7T12 >> 11 sub-movements' )
+grid()
+abline(v=mean(a$value[a$gr==0],na.rm = T),col='brown')
+abline(v=mean(a$value[a$gr==1],na.rm = T),col='green')
+
+a=m_tList[['ldif1']]
+boxplot(value ~ Var1 , data = a,horizontal = TRUE, las=2, col = c2gr,cex.axis=.7,
+        main='mLELBOW - T7T12 >> 11 sub-movements' )
+grid()
+abline(v=mean(a$value[a$gr==0],na.rm = T),col='brown')
+abline(v=mean(a$value[a$gr==1],na.rm = T),col='green')
+
+#-----------------------------------
+a=m_tList[['sdif1']]
+boxplot(value ~ Var1 , data = a,horizontal = TRUE, las=2, col = c2gr,cex.axis=.7,main='mRELBOW-mLELBOW >> 11 sub-movements' )
+grid()
+abline(v=mean(a$value[a$gr==0],na.rm = T),col='brown')
+abline(v=mean(a$value[a$gr==1],na.rm = T),col='green')
+
+#ab=lapply(X=names(rdif1),FUN=function(x,a,b){a[[x]]-b[[x]]},a=rdif1,b=ldif1)
+
+m_ab=rbLE_2bow
+colnames(m_ab)=c('value','Var1','L1')
+m_ab$Var1=factor(m_ab$Var1)
+m_ab$L1=factor(m_ab$L1)
+m_ab=adGrF(m_ab)
+  
+boxplot(value ~ Var1 , data = m_ab,horizontal = TRUE, las=2, col = c2gr,cex.axis=.7,main='Lateral elevation T7T12 >> 11 sub-movements' )
+grid()
+abline(v=mean(m_ab$value[a$gr==0],na.rm = T),col='brown')
+abline(v=mean(m_ab$value[a$gr==1],na.rm = T),col='green')
+
+```
+
+<p class='p_caption'>Elevation (mRELBOW - T7T12) >> 2nd step SF, 11 sub-movements</p>
+``` {r echo=F} 
+#a=m_tList[['ant4']]
+a=m_tList[['rdif1']]
+a1=a[a$gr==0,]
+a1=droplevels(a1)
+a1=tapply(a1$value, a1$Var1, summary)
+a1=sapply(a1, "[", c("Mean"))
+a1=describe(a1)
+a2=a[a$gr==1,]
+a2=droplevels(a2)
+a2=tapply(a2$value, a2$Var1, summary)
+a2=sapply(a2, "[", c("Mean"))
+a2=describe(a2)
+a=rbind(a1,a2); rownames(a)=c('1st group', '2nd group')
+#set.caption('Elevation (mRELBOW - T7T12) >> 2nd step SF, 11 sub-movements')
+pander(a, use.hyphening = TRUE, style='rmarkdown')
+```
+
+<p class='p_caption'>Elevation (mLELBOW - T7T12) >> 2nd step SF, 11 sub-movements</p>
+``` {r }
+a=m_tList[['ldif1']]
+a1=a[a$gr==0,]
+a1=droplevels(a1)
+a1=tapply(a1$value, a1$Var1, summary)
+a1=sapply(a1, "[", c("Mean"))
+a1=describe(a1)
+a2=a[a$gr==1,]
+a2=droplevels(a2)
+a2=tapply(a2$value, a2$Var1, summary)
+a2=sapply(a2, "[", c("Mean"))
+a2=describe(a2)
+a=rbind(a1,a2); rownames(a)=c('1st group', '2nd group')
+#set.caption('Elevation (mLELBOW - T7T12) >> 2nd step SF, 11 sub-movements')
+pander(a, use.hyphening = TRUE, style='rmarkdown')
+```
+
+<p class='p_caption'>Elevation (mRELBOW - mLELBOW) >> 2nd step SF, 11 sub-movements</p>
+``` {r }
+a=m_tList[['sdif1']]
+a1=a[a$gr==0,]
+a1=droplevels(a1)
+a1=tapply(a1$value, a1$Var1, summary)
+a1=sapply(a1, "[", c("Mean"))
+a1=describe(a1)
+a2=a[a$gr==1,]
+a2=droplevels(a2)
+a2=tapply(a2$value, a2$Var1, summary)
+a2=sapply(a2, "[", c("Mean"))
+a2=describe(a2)
+a=rbind(a1,a2); rownames(a)=c('1st group', '2nd group')
+#set.caption('Elevation (mRELBOW - mLELBOW) >> 2nd step SF, 11 sub-movements')
+pander(a, use.hyphening = TRUE, style='rmarkdown')
+
+```
+
+Density plots of the angle values for the sub-movements of two symmetrical intervals (4th to 11th) grouped by the trial identities. 
+
+Brown color represents the right upper arm angles (mRELBOW - T7T12) for the 1st group and light green the 2nd; vertical lines mark mean value of the corresponding trials. The orange color represents the left angles (mLELBOW - T7T12)  for the 1st group and dark green the 2nd; vertical lines mark mean value of the corresponding trials. Dark pink color represents the difference angle between the right and left (mRELBOW - mLELBOW).
+
+Blue vertical lines mark summ of the angle values in the beginning of the form (2001-code). The dotted blue line marks the left upper arm whereas the continius blue lines the right.
+
+``` {r echo=F, fig.width=8.23, fig.height=6.1, results='hide'} 
+a=m_tList[['rdif1']][m_tList[['rdif1']]$L1!='m_1' & m_tList[['rdif1']]$L1!='m_2' & m_tList[['rdif1']]$L1!='m_3',]
+b=m_tList[['ldif1']][m_tList[['ldif1']]$L1!='m_1' & m_tList[['ldif1']]$L1!='m_2' & m_tList[['ldif1']]$L1!='m_3',]
+c=m_tList[['sdif1']][m_tList[['sdif1']]$L1!='m_1' & m_tList[['sdif1']]$L1!='m_2' & m_tList[['sdif1']]$L1!='m_3',]
+
+c2dgr=c(replicate(l1,'dark orange'),replicate(l2,'dark green'))
+xl=c(min(a$value,na.rm = T),max(a$value,na.rm = T))
+yl=c(0,7/(max(a$value,na.rm = T)-min(a$value,na.rm = T)))
+
+par(mfrow=c(5,5)) 
+par(mar=c(2.1, 1.9, 1.1, 1.9))
+
+for(i in 1:length(names(rdif1))){
+tN=names(rdif1)[i]
+sm.density(a$value[a$Var1==tN], xlab="degrees", xlim=xl,ylim=yl, col=c2gr[i])
+
+sm.density(b$value[b$Var1==tN], xlab="degrees",lty=1, xlim=xl,ylim=yl, col=c2dgr[i],add=T)
+
+sm.density(c$value[c$Var1==tN], xlab="degrees",lty=1, xlim=xl,ylim=yl, col='deeppink',add=T)
+
+title(main=tN)
+grid()
+abline(v=mean(a$value[a$Var1==tN],na.rm = T),col=c2gr[i])
+abline(v=t2001[['rdif1']][i],col='blue', lwd=0.5)
+
+abline(v=mean(b$value[b$Var1==tN],na.rm = T),col=c2dgr[i],lty=1)
+abline(v=t2001[['ldif1']][i],col='blue',lty=2, lwd=0.5)
+}
+
+```
+
+
+#### <a name="pN2"></a>Motion of the upper arms relative to the vertical orientation of the ribcage, grouped by sub-movements
+
+Also we can look at differences in the angles across the 11 sub-movements without differentiating between individual trials. The red color represents the 1st group and green the 2nd. Horizontal axes are given in degrees of the angles and the vertical axes represent grouping factor – a number of the sub-movement.
+
+
+```{r }
+
+par(mar=c(2.5, 4.5, 1.1, 1.5))
+par(mfrow=c(2,1)) 
+
+a=m_tList[['rdif1']]
+boxplot(value~L1, data = a, subset=(a$gr==0), horizontal=T,las=2,col=rgb(1,.3,.5, alpha=0.3),medcol="red",add=F, notch=TRUE, varwidth=T,cex.axis=.7, main='Right')
+
+boxplot(value~L1, data = a, subset=(a$gr==1), horizontal=T,las=2,col=rgb(.5,1,.3, alpha=0.6), medcol="green",add=T, varwidth=T,cex.axis=.7)
+grid()
+a1=mean(sapply(X=unique(a$L1),FUN = function(X,aa){mean(aa$value[aa$gr==0 & aa$L1==X],na.rm = T)},aa=a))
+a2=mean(sapply(X=unique(a$L1),FUN = function(X,aa){mean(aa$value[aa$gr==1 & aa$L1==X],na.rm = T)},aa=a))
+abline(v=a1,col='brown')
+abline(v=a2,col='green')
+
+a=m_tList[['ldif1']]
+boxplot(value~L1, data = a, subset=(a$gr==0), horizontal=T,las=2,col=rgb(1,.3,.5, alpha=0.3),medcol="red",add=F, notch=TRUE, varwidth=T,cex.axis=.7, main='Left')
+
+boxplot(value~L1, data = a, subset=(a$gr==1), horizontal=T,las=2,col=rgb(.5,1,.3, alpha=0.6), medcol="green",add=T, varwidth=T,cex.axis=.7)
+grid()
+a1=mean(sapply(X=unique(a$L1),FUN = function(X,aa){mean(aa$value[aa$gr==0 & aa$L1==X],na.rm = T)},aa=a))
+a2=mean(sapply(X=unique(a$L1),FUN = function(X,aa){mean(aa$value[aa$gr==1 & aa$L1==X],na.rm = T)},aa=a))
+abline(v=a1,col='brown')
+abline(v=a2,col='green')
+```
+
+<p class='p_caption'>Azimuth (mRELBOW - T7T12) >> 2nd step SF, 11 sub-movements</p>
+```{r }
+a=m_tList[['rdif1']]
+
+a1=a[a$gr==0,]
+a1=droplevels(a1)
+a1=tapply(a1$value, a1$L1, summary)
+a1=sapply(a1, "[", c("Mean"))
+a1=describe(a1)
+
+a2=a[a$gr==1,]
+a2=droplevels(a2)
+a2=tapply(a2$value, a2$L1, summary)
+a2=sapply(a2, "[", c("Mean"))
+a2=describe(a2)
+a=rbind(a1,a2); rownames(a)=c('1st group', '2nd group')
+#set.caption('Azimuth (mRELBOW - T7T12) >> 2nd step SF, 11 sub-movements')
+pander(a, use.hyphening = TRUE, style='rmarkdown')
+```
+
+<p class='p_caption'>Elevation (mLELBOW - T7T12) >> 2nd step SF, 11 sub-movements</p>
+```{r }
+a=m_tList[['ldif1']]
+
+a1=a[a$gr==0,]
+a1=droplevels(a1)
+a1=tapply(a1$value, a1$L1, summary)
+a1=sapply(a1, "[", c("Mean"))
+a1=describe(a1)
+
+a2=a[a$gr==1,]
+a2=droplevels(a2)
+a2=tapply(a2$value, a2$L1, summary)
+a2=sapply(a2, "[", c("Mean"))
+a2=describe(a2)
+a=rbind(a1,a2); rownames(a)=c('1st group', '2nd group')
+#set.caption('Elevation (mLELBOW - T7T12) >> 2nd step SF, 11 sub-movements')
+pander(a, use.hyphening = TRUE, style='rmarkdown')
+```
+
+<p class='p_caption'>Elevation (mRELBOW-mLELBOW) >> 2nd step SF, 11 sub-movements</p>
+```{r }
+a=m_tList[['sdif1']]
+
+a1=a[a$gr==0,]
+a1=droplevels(a1)
+a1=tapply(a1$value, a1$L1, summary)
+a1=sapply(a1, "[", c("Mean"))
+a1=describe(a1)
+
+a2=a[a$gr==1,]
+a2=droplevels(a2)
+a2=tapply(a2$value, a2$L1, summary)
+a2=sapply(a2, "[", c("Mean"))
+a2=describe(a2)
+a=rbind(a1,a2); rownames(a)=c('1st group', '2nd group')
+#set.caption('Elevation (mRELBOW-mLELBOW) >> 2nd step SF, 11 sub-movements')
+pander(a, use.hyphening = TRUE, style='rmarkdown')
+```
+
+Density plots of the angle values grouped by the 11 sub-movements. Brown color represents the 1st group and green the 2nd; vertical lines mark mean value of the corresponding sub-movement for 1st and 2nd group. The 2nd and 3rd rows capture a symmetrical motion sequence: from the left into right bow stance and from the right into left.
+
+``` {r fig.height=10} 
+a=m_tList[['rdif1']]
+
+xl=c(min(a$value,na.rm = T),max(a$value,na.rm = T))
+yl=c(0,7/(max(a$value,na.rm = T)-min(a$value,na.rm = T)))
+
+par(mar=c(2.1, 1.9, 1.1, 1.9))
+par(mfrow=c(3,4)) 
+i=1
+for(ii in 1:(length(unique(a$L1))+1)){
+  if(ii==1){
+    plot(1, type="n", axes=F, xlab="", ylab="")
+    text(x=1,labels='Right', cex = 1.7,adj = c(.5,.5))}
+  else{
+tN=unique(a$L1)[i]
+sm.density.compare(a$value[a$L1==tN & is.finite(a$value)], a$gr[a$L1==tN], xlab="degrees", xlim=xl,ylim=yl, col=c('brown','green'))
+title(main=tN)
+grid()
+abline(v=mean(a$value[a$L1==tN & a$gr==0],na.rm = T),col='brown')
+abline(v=mean(a$value[a$L1==tN & a$gr==1],na.rm = T),col='green')
+
+i=i+1
+}
+}
+
+a=m_tList[['ldif1']]
+
+xl=c(min(a$value,na.rm = T),max(a$value,na.rm = T))
+yl=c(0,7/(max(a$value,na.rm = T)-min(a$value,na.rm = T)))
+
+par(mar=c(2.1, 1.9, 1.1, 1.9))
+par(mfrow=c(3,4)) 
+i=1
+for(ii in 1:(length(unique(a$L1))+1)){
+  if(ii==1){
+    plot(1, type="n", axes=F, xlab="", ylab="")
+    text(x=1,labels='Left', cex = 1.7,adj = c(.5,.5))}
+  else{
+tN=unique(a$L1)[i]
+sm.density.compare(a$value[a$L1==tN & is.finite(a$value)], a$gr[a$L1==tN], xlab="degrees", xlim=xl,ylim=yl, col=c('brown','green'))
+title(main=tN)
+grid()
+abline(v=mean(a$value[a$L1==tN & a$gr==0],na.rm = T),col='brown')
+abline(v=mean(a$value[a$L1==tN & a$gr==1],na.rm = T),col='green')
+
+i=i+1
+}
+}
+
+```
+
+#### <a name="pN3"></a>Motion of the upper arms relative to the vertical orientation of the ribcage, grouped by id-trials and sub-movements
+
+Below are boxplots for two intervals of the 2nd step that capture symmetrical body motion: from the left to right bow stance and from the right to left bow stance. The boxplots of these intervals are superimposed for each of the trials. The **1st interval is marked by green** color and the **2nd by red** (color is not associated with groups). 
+
+``` {r fig.height=18} 
+a1=cbind(qa[['m_4']][,1],qa[['m_7']][,2])
+a2=cbind(qa[['m_8']][,1],qa[['m_11']][,2])
+a1=list(m_4_7=a1,m_8_11=a2)
+ant4_2bow=f_getSubMove(a=rdif1, qa=a1)#right
+ant4_2bow=melt(ant4_2bow)
+
+ant1_2bow=f_getSubMove(a=ldif1, qa=a1)#left
+ant1_2bow=melt(ant1_2bow)
+
+dif_2bow=f_getSubMove(a=sdif1, qa=a1)#symmetry
+dif_2bow=melt(dif_2bow)
+
+par(mfrow=c(2,1)) 
+par(mar=c(2.5, 4.5, 1.1, 1.5))
+
+m_s_2bow=ant4_2bow
+
+boxplot(value~L2, data=m_s_2bow, subset=L1=='m_4_7', horizontal=T,las=2,col=rgb(.5,1,.3, alpha=0.6), medcol="green", varwidth=T,cex.axis=.7, main='Right')
+boxplot(value~L2, data=m_s_2bow, subset=L1=='m_8_11', horizontal=T,las=2,col=rgb(1,.3,.5, alpha=0.3),medcol="red",add=T, notch=TRUE, varwidth=T,cex.axis=.7)
+grid()
+
+abline(v=mean(m_s_2bow$value[m_s_2bow$L1=='m_4_7'],na.rm = T),col=rgb(.5,1,.3, alpha=0.8))
+abline(v=mean(m_s_2bow$value[m_s_2bow$L1=='m_8_11'],na.rm = T),col=rgb(1,.3,.5, alpha=0.8))
+#------------------------------left
+m_s_2bow=ant1_2bow
+
+boxplot(value~L2, data=m_s_2bow, subset=L1=='m_4_7', horizontal=T,las=2,col=rgb(.5,1,.3, alpha=0.6), medcol="green", varwidth=T,cex.axis=.7, main='Left')
+boxplot(value~L2, data=m_s_2bow, subset=L1=='m_8_11', horizontal=T,las=2,col=rgb(1,.3,.5, alpha=0.3),medcol="red",add=T, notch=TRUE, varwidth=T,cex.axis=.7)
+grid()
+
+abline(v=mean(m_s_2bow$value[m_s_2bow$L1=='m_4_7'],na.rm = T),col=rgb(.5,1,.3, alpha=0.8))
+abline(v=mean(m_s_2bow$value[m_s_2bow$L1=='m_8_11'],na.rm = T),col=rgb(1,.3,.5, alpha=0.8))
+
+```
+
+Also, we can differentiate between the different sub-movements within the two intervals and look at them individually. Below are two columns of the boxplots with 4 rows that represent consecutive phases of our two intervals. The 1st column represents the movement from the left to right bow stance (4th - 7th sub-movements), the 2nd column represents the movement from the right to left bow stance (8th - 11th sub-movements).
+
+Brown and green color mark data of the angles for the right upper arm in the 1st and 2nd group. Pale semi-transparent yellow and cyan-green colors mark angles of the left upper arm for the 1st and 2nd group.
+
+```{r fig.height=23}
+#print boxplot of trial's mean-values for each sub-movement
+par(mfrow=c(4,2)) 
+par(mar=c(4.5, 4.5, 0.5, 1.5))
+a=m_tList[['rdif1']][m_tList[['rdif1']]$L1!='m_1' & m_tList[['rdif1']]$L1!='m_2'  & m_tList[['rdif1']]$L1!='m_3',]
+
+b=tList[['rdif1']]
+
+a2=m_tList[['ldif1']][m_tList[['ldif1']]$L1!='m_1' & m_tList[['ldif1']]$L1!='m_2'  & m_tList[['ldif1']]$L1!='m_3',]
+
+b2=tList[['ldif1']]
+
+c2=c(rgb(1, .9, .1, alpha=.5),rgb(.1, 1, .8, alpha=.5))
+c2=c(replicate(l1,c2[1]),replicate(l2,c2[2]))
+
+xl=c(min(a$value,na.rm = T),max(a$value,na.rm = T))
+#boxplot for mean-values of all sub-movements for each trial
+boxplot(value ~ L1 , data = melt(b[['m_4']]), horizontal = TRUE, las=2, col = c2gr, ylim=xl,medcol='black')
+boxplot(value ~ L1 , data = melt(b2[['m_4']]), horizontal = TRUE, las=2, col = c2,add=T,medcol='blue',notch=TRUE )
+grid()
+abline(v=mean(a$value[a$gr==0 & a$L1=='m_4'],na.rm = T),col='brown')
+abline(v=mean(a$value[a$gr==1 & a$L1=='m_4'],na.rm = T),col='green')
+abline(v=mean(a2$value[a2$gr==0 & a2$L1=='m_4'],na.rm = T),col='orange')
+abline(v=mean(a2$value[a2$gr==1 & a2$L1=='m_4'],na.rm = T),col='blue')
+
+boxplot(value ~ L1 , data = melt(b[['m_8']]), horizontal = TRUE, las=2, col = c2gr, ylim=xl,medcol='black' )
+boxplot(value ~ L1 , data = melt(b2[['m_8']]), horizontal = TRUE, las=2, col = c2, add=T,medcol='blue',notch=TRUE  )
+grid()
+abline(v=mean(a$value[a$gr==0 & a$L1=='m_8'],na.rm = T),col='brown')
+abline(v=mean(a$value[a$gr==1 & a$L1=='m_8'],na.rm = T),col='green')
+abline(v=mean(a2$value[a2$gr==0 & a2$L1=='m_8'],na.rm = T),col='orange')
+abline(v=mean(a2$value[a2$gr==1 & a2$L1=='m_8'],na.rm = T),col='blue')
+
+boxplot(value ~ L1 , data = melt(b[['m_5']]), horizontal = TRUE, las=2, col = c2gr, ylim=xl,medcol='black' )
+boxplot(value ~ L1 , data = melt(b2[['m_5']]), horizontal = TRUE, las=2, col = c2, add=T,medcol='blue',notch=TRUE  )
+grid()
+abline(v=mean(a$value[a$gr==0 & a$L1=='m_5'],na.rm = T),col='brown')
+abline(v=mean(a$value[a$gr==1 & a$L1=='m_5'],na.rm = T),col='green')
+abline(v=mean(a2$value[a2$gr==0 & a2$L1=='m_5'],na.rm = T),col='orange')
+abline(v=mean(a2$value[a2$gr==1 & a2$L1=='m_5'],na.rm = T),col='blue')
+
+boxplot(value ~ L1 , data = melt(b[['m_9']]), horizontal = TRUE, las=2, col = c2gr, ylim=xl,medcol='black' )
+boxplot(value ~ L1 , data = melt(b2[['m_9']]), horizontal = TRUE, las=2, col = c2, add=T,medcol='blue',notch=TRUE  )
+grid()
+abline(v=mean(a$value[a$gr==0 & a$L1=='m_9'],na.rm = T),col='brown')
+abline(v=mean(a$value[a$gr==1 & a$L1=='m_9'],na.rm = T),col='green')
+abline(v=mean(a2$value[a2$gr==0 & a2$L1=='m_9'],na.rm = T),col='orange')
+abline(v=mean(a2$value[a2$gr==1 & a2$L1=='m_9'],na.rm = T),col='blue')
+
+boxplot(value ~ L1 , data = melt(b[['m_6']]), horizontal = TRUE, las=2, col = c2gr , ylim=xl,medcol='black')
+boxplot(value ~ L1 , data = melt(b2[['m_6']]), horizontal = TRUE, las=2, col = c2 , add=T,medcol='blue',notch=TRUE )
+grid()
+abline(v=mean(a$value[a$gr==0 & a$L1=='m_6'],na.rm = T),col='brown')
+abline(v=mean(a$value[a$gr==1 & a$L1=='m_6'],na.rm = T),col='green')
+abline(v=mean(a2$value[a2$gr==0 & a2$L1=='m_6'],na.rm = T),col='orange')
+abline(v=mean(a2$value[a2$gr==1 & a2$L1=='m_6'],na.rm = T),col='blue')
+
+boxplot(value ~ L1 , data = melt(b[['m_10']]), horizontal = TRUE, las=2, col = c2gr, ylim=xl,medcol='black' )
+boxplot(value ~ L1 , data = melt(b2[['m_10']]), horizontal = TRUE, las=2, col = c2, add=T,medcol='blue',notch=TRUE )
+grid()
+abline(v=mean(a$value[a$gr==0 & a$L1=='m_10'],na.rm = T),col='brown')
+abline(v=mean(a$value[a$gr==1 & a$L1=='m_10'],na.rm = T),col='green')
+abline(v=mean(a2$value[a2$gr==0 & a2$L1=='m_10'],na.rm = T),col='orange')
+abline(v=mean(a2$value[a2$gr==1 & a2$L1=='m_10'],na.rm = T),col='blue')
+
+boxplot(value ~ L1 , data = melt(b[['m_7']]), horizontal = TRUE, las=2, col = c2gr , ylim=xl,medcol='black')
+boxplot(value ~ L1 , data = melt(b2[['m_7']]), horizontal = TRUE, las=2, col = c2, add=T,medcol='blue',notch=TRUE )
+grid()
+abline(v=mean(a$value[a$gr==0 & a$L1=='m_7'],na.rm = T),col='brown')
+abline(v=mean(a$value[a$gr==1 & a$L1=='m_7'],na.rm = T),col='green')
+abline(v=mean(a2$value[a2$gr==0 & a2$L1=='m_7'],na.rm = T),col='orange')
+abline(v=mean(a2$value[a2$gr==1 & a2$L1=='m_7'],na.rm = T),col='blue')
+
+boxplot(value ~ L1 , data = melt(b[['m_11']]), horizontal = TRUE, las=2, col = c2gr , ylim=xl,medcol='black')
+boxplot(value ~ L1 , data = melt(b2[['m_11']]), horizontal = TRUE, las=2, col = c2, add=T,medcol='blue',notch=TRUE )
+grid()
+abline(v=mean(a$value[a$gr==0 & a$L1=='m_11'],na.rm = T),col='brown')
+abline(v=mean(a$value[a$gr==1 & a$L1=='m_11'],na.rm = T),col='green')
+abline(v=mean(a2$value[a2$gr==0 & a2$L1=='m_11'],na.rm = T),col='orange')
+abline(v=mean(a2$value[a2$gr==1 & a2$L1=='m_11'],na.rm = T),col='blue')
+
+```
+
+Furthermore we can compare the actual time series for the two intervals. The figure below shows 25 plots for each of the trials with the red/orange color marking the 2nd interval and green the 1st. Vertical lines show boundaries for the four sub-movements within each interval; horizontal lines show relative angles for the right and left upper arm (green and dark green) in the 1st frame of the trial than a person is in a straight position; and a blue horizontal line marks their difference in this 1st frame of the trial.
+
+Horizontal axis is given in frames with sampling frequency 120 frames per second. 
+
+Green colors are for the 1st interval (4-7th sub-movements; left to right bow stance) and red-like for the 2nd interval (8-11th sub-movements; right to left bow stance); darker colors are for the left upper arm and lighter colors for the right upper arm.
+
+##### Right side (1-green & 2-orange), Left side (1-dark green & 2-red)
+
+```{r echo=FALSE, fig.width=8.23, fig.height=7.8}
+
+tdo=as.data.frame(ant4_2bow)
+fdo=as.data.frame(dif_2bow)
+
+tdo2=as.data.frame(ant1_2bow)
+
+#,fdo$value
+yl=c(min(c(tdo$value,tdo2$value),na.rm = T),
+     max(c(tdo$value,tdo2$value),na.rm = T))
+xl=c(0,1700)
+par(mfrow=c(5,5)) 
+par(mar=c(2.1, 1.9, 1.1, 1.9))
+for(i in 1:length(names(rdif1))){
+  tN=names(rdif1)[i]
+  
+plot(tdo$value[tdo$L2==tN & tdo$L1=='m_4_7'],
+       col=rgb(.5,1,.3, alpha=0.8),type='l',
+       xlim=xl,ylim=yl,xaxt="n", main=tN, xlab ='', ylab ='')
+
+points(tdo$value[tdo$L2==tN & tdo$L1=='m_8_11'], col=rgb(1,.5,.3, alpha=0.8),type='l')
+
+points(tdo2$value[tdo2$L2==tN & tdo2$L1=='m_4_7'], col='dark green',type='l')
+points(tdo2$value[tdo2$L2==tN & tdo2$L1=='m_8_11'], col='red',type='l',lwd=1)
+
+  axis(side=1, at=seq(xl[1], xl[2], by=120))
+  abline(h=0)
+#   abline(h=t2001[['rdif1']][i], col=rgb(1,.5,.3, alpha=0.8),lty=2,lwd=.7)
+#   abline(h=t2001[['ldif1']][i], col=rgb(.5,1,.3, alpha=0.8),lty=2,lwd=.7)
+  abline(h=t2001[['rdif1']][i], col=rgb(.5,1,.3, alpha=0.8),lty=2,lwd=.7)
+  abline(h=t2001[['ldif1']][i], col='dark green',lty=2,lwd=.7)
+  
+  abline(v=qa[['m_4']][tN,2]-qa[['m_4']][tN,1],col=rgb(1,.5,.3, alpha=0.6))
+  abline(v=qa[['m_8']][tN,2]-qa[['m_8']][tN,1],col=rgb(.5,1,.3, alpha=0.6))
+  abline(v=qa[['m_5']][tN,2]-qa[['m_4']][tN,1],col=rgb(1,.5,.3, alpha=0.6))
+  abline(v=qa[['m_9']][tN,2]-qa[['m_8']][tN,1],col=rgb(.5,1,.3, alpha=0.6))
+  abline(v=qa[['m_6']][tN,2]-qa[['m_4']][tN,1],col=rgb(1,.5,.3, alpha=0.6))
+  abline(v=qa[['m_10']][tN,2]-qa[['m_8']][tN,1],col=rgb(.5,1,.3, alpha=0.6))
+  
+  abline(h=t2001[['sdif1']][i], col='blue',lty=1,lwd=.4)
+  
+}
+```
+
+
+Below are the time series for the difference between the right and left upper arms (mRELBOW-mLELBOW) represened in the 1st interval in olive color and in pink color in the 2nd interval. The dotted lines in the light gray color represents lateral tilt of the ribcage in the 1st interval and in the dark gray in the 2nd.
+
+##### <a name="pN3_p2"></a>mRELBOW-mLELBOW (1-olive & 2-dark pink), T7T12 (1-light gray, 2-dark gray)
+
+```{r echo=FALSE, fig.width=8.23, fig.height=7.8}
+#redifine lateral angles for ribcage so that tdo3 has 2 intervals 
+#and not 11 sub-moves as rbLE_2bow
+tdo3=f_getSubMove(a=rbLE, qa=a1)
+tdo3=melt(tdo3)
+tdo3=as.data.frame(tdo3)
+
+tdo=as.data.frame(ant4_2bow)
+fdo=as.data.frame(dif_2bow)
+
+tdo2=as.data.frame(ant1_2bow)
+
+yl=c(min(c(tdo$value,tdo2$value,fdo$value),na.rm = T), max(c(tdo$value,tdo2$value,fdo$value),na.rm = T))
+xl=c(0,1700)
+par(mfrow=c(5,5)) 
+par(mar=c(2.1, 1.9, 1.1, 1.9))
+for(i in 1:length(names(rdif1))){
+  tN=names(rdif1)[i]
+
+plot(fdo$value[fdo$L2==tN & fdo$L1=='m_4_7'], 
+     xlim=xl,ylim=yl,xaxt="n", main=tN, xlab ='', ylab ='', lty=1, col='olivedrab',type='l',lwd=1.7)
+
+points(fdo$value[fdo$L2==tN & fdo$L1=='m_8_11'], lty=1, col='hotpink',type='l',lwd=1.7)
+  
+points(tdo3$value[tdo3$L2==tN & tdo3$L1=='m_4_7'],col='lightskyblue3',type='l',lwd=0.8,lty=1)
+
+points(tdo3$value[tdo3$L2==tN & tdo3$L1=='m_8_11'], col='lightskyblue4',type='l',lwd=0.8,lty=1)
+
+  axis(side=1, at=seq(xl[1], xl[2], by=120))
+  abline(h=0)
+  abline(h=t2001[['rdif1']][i], col=rgb(.5,1,.3, alpha=0.8),lty=2,lwd=.7)
+  abline(h=t2001[['ldif1']][i], col='dark green',lty=2,lwd=.7)
+  
+  abline(v=qa[['m_4']][tN,2]-qa[['m_4']][tN,1],col=rgb(1,.5,.3, alpha=0.6))
+  abline(v=qa[['m_8']][tN,2]-qa[['m_8']][tN,1],col=rgb(.5,1,.3, alpha=0.6))
+  abline(v=qa[['m_5']][tN,2]-qa[['m_4']][tN,1],col=rgb(1,.5,.3, alpha=0.6))
+  abline(v=qa[['m_9']][tN,2]-qa[['m_8']][tN,1],col=rgb(.5,1,.3, alpha=0.6))
+  abline(v=qa[['m_6']][tN,2]-qa[['m_4']][tN,1],col=rgb(1,.5,.3, alpha=0.6))
+  abline(v=qa[['m_10']][tN,2]-qa[['m_8']][tN,1],col=rgb(.5,1,.3, alpha=0.6))
+  
+  abline(h=t2001[['sdif1']][i], col='blue',lty=1,lwd=.4)
+  
+}
+```
+
+
+Below are the time series for the difference between the right and left upper arms (mRELBOW_2-mLELBOW_2+su4_2) in relation to the ribcage; in other words these values represent the motion of the shoulders in relation to the lateral orientation of the ribcage. Time series for the 1st interval are in the olive color and for the 2nd interval in the pink color. The dotted lines in the light gray color represents lateral tilt of the ribcage in the 1st interval and in the dark gray in the 2nd.
+
+##### <a name="pN3_p3"></a>mRELBOW-mLELBOW + T7T12 relative to ribcage (1-olive & 2-dark pink), <br>T7T12 (1-light gray, 2-dark gray)
+
+```{r echo=FALSE, fig.width=8.23, fig.height=7.8}
+
+#redifine lateral angles for ribcage so that tdo3 has 2 intervals 
+#and not 11 sub-moves as rbLE_2bow
+tdo3=f_getSubMove(a=rbLE, qa=a1)
+tdo3=melt(tdo3)
+tdo3=as.data.frame(tdo3)
+
+tdo=as.data.frame(ant4_2bow)
+fdo=as.data.frame(dif_2bow)
+
+tdo2=as.data.frame(ant1_2bow)
+
+yl=c(min(c(tdo$value,tdo2$value,fdo$value),na.rm = T), max(c(tdo$value,tdo2$value,fdo$value),na.rm = T))
+xl=c(0,1700)
+par(mfrow=c(5,5)) 
+par(mar=c(2.1, 1.9, 1.1, 1.9))
+for(i in 1:length(names(rdif1))){
+  tN=names(rdif1)[i]
+
+plot(fdo$value[fdo$L2==tN & fdo$L1=='m_4_7']+tdo3$value[tdo3$L2==tN & tdo3$L1=='m_4_7'],
+    xlim=xl,ylim=yl,xaxt="n", main=tN, xlab ='', ylab ='', lty=1, col='olivedrab',type='l',lwd=1.7)
+
+points(fdo$value[fdo$L2==tN & fdo$L1=='m_8_11']+tdo3$value[tdo3$L2==tN & tdo3$L1=='m_8_11'],
+       lty=1, col='hotpink',type='l',lwd=1.7)
+  
+points(tdo3$value[tdo3$L2==tN & tdo3$L1=='m_4_7'],
+       col='lightskyblue3',type='l',lwd=0.8,lty=1)
+points(tdo3$value[tdo3$L2==tN & tdo3$L1=='m_8_11'],
+       col='lightskyblue4',type='l',lwd=0.8,lty=1)
+
+  axis(side=1, at=seq(xl[1], xl[2], by=120))
+  abline(h=0)
+  abline(h=t2001[['rdif1']][i], col=rgb(.5,1,.3, alpha=0.8),lty=2,lwd=.7)
+  abline(h=t2001[['ldif1']][i], col='dark green',lty=2,lwd=.7)
+  
+  abline(v=qa[['m_4']][tN,2]-qa[['m_4']][tN,1],col=rgb(1,.5,.3, alpha=0.6))
+  abline(v=qa[['m_8']][tN,2]-qa[['m_8']][tN,1],col=rgb(.5,1,.3, alpha=0.6))
+  abline(v=qa[['m_5']][tN,2]-qa[['m_4']][tN,1],col=rgb(1,.5,.3, alpha=0.6))
+  abline(v=qa[['m_9']][tN,2]-qa[['m_8']][tN,1],col=rgb(.5,1,.3, alpha=0.6))
+  abline(v=qa[['m_6']][tN,2]-qa[['m_4']][tN,1],col=rgb(1,.5,.3, alpha=0.6))
+  abline(v=qa[['m_10']][tN,2]-qa[['m_8']][tN,1],col=rgb(.5,1,.3, alpha=0.6))
+  
+  abline(h=t2001[['sdif1']][i], col='blue',lty=1,lwd=.4)
+  
+}
+```

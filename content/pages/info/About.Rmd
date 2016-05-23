@@ -1,0 +1,49 @@
+---
+Title: An infinite project
+Menulabel: About
+Tags: general info
+Authors: Nicolek
+Summary: An infinite project
+output: 
+  html_document: 
+    theme: readable
+    highlight: pygments
+    css: theme/css/rStyle.css
+---
+
+```{r, echo=FALSE, cache=FALSE, include=FALSE}
+#after tags>>
+#Slug: relative-movement-of-the-clavicles-in-the-horisontal-plane
+#date after title >> Date: 2010-12-03 10:20
+#after date >> Modified: '`r format(Sys.Date(), "%B %d, %Y")`'
+
+
+library(knitr)
+#opts_knit$set( progress = TRUE, verbose = TRUE)
+knitr::opts_chunk$set(echo=F, warning=F,message=F, prompt=F, error=F)#
+#knitr::opts_chunk$set(results="asis")# true is default behaviour
+knitr::opts_chunk$set(fig.width=15,  fig.height = 15)
+knitr::opts_chunk$set(dev = 'svg')
+knitr::opts_chunk$set(dpi = 130)
+##echo=FALSE, results='hide', warning=F, message=FALSE
+
+```
+
+
+<!---
+## This was load_s_0.R inside the /Users/nk/Documents/devPro/R-home/3d/scripts folder
+## ---------------------------------------------
+## running time: 1.71438578367233
+## we selected 2nd SF step for all trials
+## SF step: 2, sub-movements: 0
+## we padded with 10 frames on the left&right sides for boundary effects
+## mallAngl, mallCent, mallEvent were updated to the selected time interval
+## mallAngl_alig, mallCent_alig, mallEvent_alig are dtw alighned after (centerRFoot_2+centerLFoot_2)
+## InBowStance has selected time intervals for Left to Right BS for alighned data
+## mallAnglD, mallCentD are downsampled (frd=15) and not aligned
+## mallAngl_aligD, mallCent_aligD are downsampled and aligned
+## This was load_s_0_st2_calc0.R inside the /Users/nk/Documents/devPro/R-home/3d/scripts folder
+## ---------------------------------------------
+-->
+
+This place is a work in progress and is used to collect different reports. The row data set consist of 3d full-body data that captures movement of 25 people. This dataset was pre-processed and exported as angular representations of 31 body elements.

@@ -1,0 +1,700 @@
+---
+Title: Lateral and anterior Movement of the Head
+Category: Summary Stats
+Tags: summary posture, lateral tilting, anterior tilting, central, head
+Authors: Nicolek
+Summary:  Summary statistics for tilting of the head during the 2nd step of the Tai Chi Short Form
+Series: Head and Neck
+series_index: 1
+output: 
+  html_document:
+    theme: readable
+    highlight: pygments
+    css: theme/css/rStyle.css
+---
+
+```{r, echo=FALSE, cache=FALSE, include=FALSE}
+#after tags>>
+#Slug: relative-movement-of-the-clavicles-in-the-horisontal-plane
+#date after title >> Date: 2010-12-03 10:20
+#after date >> Modified: '`r format(Sys.Date(), "%B %d, %Y")`'
+
+library(knitr)
+#opts_knit$set( progress = TRUE, verbose = TRUE)
+knitr::opts_chunk$set(echo=F, warning=F, message=F, prompt=F, error=F)#
+#knitr::opts_chunk$set(results="asis")# true is default behaviour
+knitr::opts_chunk$set(fig.width=15,  fig.height = 15)
+knitr::opts_chunk$set(dev = 'svg')
+knitr::opts_chunk$set(dpi = 130)
+##echo=FALSE, results='hide', warning=F, message=FALSE
+```
+
+<!---
+## This was load_s_0.R inside the /Users/nk/Documents/devPro/R-home/3d/scripts folder
+## ---------------------------------------------
+## running time: 1.71438578367233
+## we selected 2nd SF step for all trials
+## SF step: 2, sub-movements: 0
+## we padded with 10 frames on the left&right sides for boundary effects
+## mallAngl, mallCent, mallEvent were updated to the selected time interval
+## mallAngl_alig, mallCent_alig, mallEvent_alig are dtw alighned after (centerRFoot_2+centerLFoot_2)
+## InBowStance has selected time intervals for Left to Right BS for alighned data
+## mallAnglD, mallCentD are downsampled (frd=15) and not aligned
+## mallAngl_aligD, mallCent_aligD are downsampled and aligned
+## This was load_s_0_st2_calc0.R inside the /Users/nk/Documents/devPro/R-home/3d/scripts folder
+## ---------------------------------------------
+## toc: true
+##rmarkdown::render(input='/Users/nk/Documents/devPro/R-home/3d/markdown/summaryStatistics/head_1.Rmd',output_file='head_1.html',envir=globalenv())
+-->
+
+```{r include=FALSE, cache=FALSE}
+
+ load("/Users/nk/Documents/devPro/R-home/3d/all_load_s_0_st2_calc0.RData", .GlobalEnv)
+ 
+ require(sm)
+ require(pander)
+ require(reshape2)
+ sm.options(verbose=0)
+ #class="table table-condensed" and <caption> should be inside table but doesn't work with rmd_reader?
+ # panderOptions("table.split.table", Inf)  ## don't split tables
+ # panderOptions('knitr.auto.asis', FALSE)
+```
+
+
+```{r include=FALSE, cache=FALSE}
+normAngl=function(ang){
+if(is.finite(ang)){
+# reduce the angle  
+ang =  ang %% (2*pi); 
+#force it to be the positive remainder, so that 0 <= angle < 360  
+ang = (ang + (2*pi)) %% (2*pi); 
+#force into the minimum absolute value residue class, so that -180 < angle <= 180  
+if (ang > pi)ang= ang-(2*pi);
+return(ang);
+}else return(ang)
+}
+
+# returns a nested lists: 1st level for sub-moves, 2nd level for trials
+f_getSubMove=function(ang, qa){
+  #ang is a 25-list with [1-col-marker and rows-frames] vectors
+  mNames=names(qa)#sub_moves
+  move=lapply(X=mNames,FUN=f_get1SubMove,ang=ang,qa=qa)
+  #str(lapply(X=names(qa),FUN=f_get1SubMove,ang=rdif1,qa=qa)) 
+  #>> returns 11-list with each 25-list, each with data vector
+  names(move)=names(qa);
+  return(move)
+}
+
+f_get1SubMove=function(subMov, ang, qa){
+#f_get1SubMove('m_1',a=rdif1,qa)
+#subMove is the number or string for the sub-move
+#qa is a list for all 11 sub-moves; each with 25-id-rows by 2 [end, start] of the frame columns
+#ang is a 25-list with [1-col-marker and rows-frames] vectors
+    idNames=rownames(qa[[subMov]])#id_trials
+    move2=lapply(X=idNames, FUN = f_getSubInterval,subMov,ang,qa=qa)
+    #lapply(X=rownames(qa[['m_1']]), FUN = f_getSubInterval,subMov='m_1',ang=rdif1,qa=qa)[[1]][1:2]
+    #lapply(X=rownames(qa[[1]]), FUN = f_getSubInterval,subMov=1,ang=rdif1,qa=qa)[[1]][1:2]
+    #returns list of 25 with each being vector of time series for subMov
+    
+    names(move2)=names(ang);
+    return(move2)
+}
+
+f_getSubInterval = function(idN,subMov,ang,qa){
+  #subMove is the number or string for the sub-move
+  #idN is a paricular trial id
+  # cat(sprintf('idN=%s\n',idN))
+  # cat(sprintf('subMov=%s\n',subMov))
+      movSt=qa[[subMov]][idN,1];#-buff; 
+      movEn=qa[[subMov]][idN,2];#+buff;
+      return(ang[[idN]][movSt:movEn])
+}
+
+#add 'gr' variable as a group factor (all id_1* >> 0 and all id_2* >> 1)
+adGrF=function(a){
+  k=array(dim=length(a[,1])); 
+  k[grep('id_1',a[,'Var1'])]=0; 
+  k[grep('id_2',a[,'Var1'])]=1; 
+  a=cbind(a,gr=k)
+  return(a)
+}
+
+f_getSubMove_collection=function(angCollect, qa){
+  #tList >> a collection of 25-lists with vectors (single marker-dim like rdif1)
+  #tList=list(rdif1,ldif1,sdif1)
+  #tList=lapply(X = angCollect,FUN = f_getSubMove,qa=qa)
+  m_tList=lapply(X = tList,FUN = melt)
+  names(m_tList)=names(angCollect)#c('rdif1','ldif1','sdif1')
+  lapply(X = m_tList,FUN = function(X){
+    colnames(X)=c('value','Var1','L1')
+    X$Var1=factor(X$Var1)
+    X$L1=factor(X$L1)
+    X=adGrF(X)
+  })
+}
+#------------------------------------------------------
+# extract elevation angles (in Degrees) for head (sp7,su7) and neck (sp6,su6) from the list of 25 trials 
+anteriorH=lapply(X=mallAngl, FUN=function(x){x[,'sp7_2']*180/pi})
+lateralH=lapply(X=mallAngl, FUN=function(x){x[,'su7_2']*180/pi})
+tList=list(anteriorH,lateralH)
+names(tList)=c('ant1','lat1')
+
+gr1Names=grep('id_1',names(anteriorH))
+gr2Names=grep('id_2',names(anteriorH))
+l1=length(gr1Names)
+l2=length(gr2Names)
+c2gr=c(replicate(l1,'brown'),replicate(l2,'green'))
+
+# find indexes for all avaliable sub-movement eventCodes for each of the 25 persons
+# we should get 12x25 matrix for 11 sub-movements of the 2nd step of the Short Form
+eventIndexes=sapply(mallEvent,FUN=function(x){which(x>0)})
+# create a list with each element being a 25x2 matrix with
+# rows for each trial and 2 columns for their frames for end/str of the sub-movement
+qa=lapply(X=1:length(eventIndexes[,1]),FUN=function(X,a){if(X<length(a[,1]))
+    return(cbind(a[X,],a[(X+1),]))},a=eventIndexes)
+qa[12]=NULL; names(qa)=paste('m',1:length(qa),sep='_')
+
+#------------------------------------------------------
+#new code2
+tList=lapply(X = tList,FUN = f_getSubMove,qa=qa)
+antH=tList[['ant1']]
+latH=tList[['lat1']]
+m_tList=f_getSubMove_collection(tList, qa)
+m_antH=m_tList[['ant1']]
+m_latH=m_tList[['lat1']]
+#------------------------------------------------------
+#code 2001 values at the beginning of the form
+#values at the beginning of the form
+t2001=sapply(X = names(anteriorH),FUN = function(X,a1,a2){
+  k=which(a2[[X]]==2001)# 2001start of SF WuJi
+  h1=a1[[X]][k,'sp7_2']*180/pi
+  h2=a1[[X]][k,'su7_2']*180/pi
+  h=cbind(h1,h2)
+  return(h)
+},a1=allAngl,a2=allEvent)
+t2001=t(t2001)
+t2001=cbind(sp7_2=t2001[,1],su7_2=t2001[,2],gr=c(replicate(length(gr1Names),0),replicate(length(gr2Names),1)))
+t2001=as.data.frame(t2001, optional = F)
+
+```
+
+# How does head deviate from a vertical axis?
+
+To examine how a head deviates from a vertical axis we have to look at a plane number 7 in our 4th data model. This plane captures an orientation of the person’s head and is orthonormal to a line between the chin and middle of the forehead. Possible deviations from the vertical axis can occur in two planes – one that reflects posterior-anterior tilt and one that reflects lateral tilt. Thus we need to check elevation angels for planar points ‘sp’ and ‘su’ that are used to define ‘spinal planes’ in our data. Here ‘sp’ points correspond to forward direction and ‘su’ points to a left-hand direction.
+
+In our set up there is some uncertainty about position of markers relative to individual bodies because of the manual placement but also because of the idiosyncrasies and anatomical variations across individuals. Thus as an approximate reference we should provide angle values that were captured in the beginning of the form than a person is in a standing position. Below we refer to this time point as ‘2001’ frame.
+
+## Summary. Posterior-anterior tilt of the head 
+
+According to description of an idealised movement we would expect all elevation angles to be around zero degree. However on average a head is tilted up around 9 degrees and the 1st group (students) shows about 3 degrees smaller tilt than the 2nd group (teachers). 
+
+In two groups the means of angles that are [grouped after the 11 sub-movements](#pH1) vary only about 1 degree whereas mean variations for angles that are [grouped by the trial identities](#pH2) is about 6 degrees. This happens because the individual differences among trials within the same group and sub-movement cancel each other out than we group the values by the sub-movements. In other words, the head tilt seems to be independent from the movement phases on a group level and dependant on a level of individual trials. Than we look at [individual time series](#pH3) for two symmetrical movements we can notice correlated changes within corresponding sub-movements in the most of the trials. 
+
+<p class='p_caption'>Head, anterior tilting >> 11 sub-movements</p>
+``` {r }
+a=m_antH
+a1=describe(a[a$gr==0,1])
+a2=describe(a[a$gr==1,1])
+a1=rbind(a1,a2,describe(t2001$sp7_2[t2001$gr==0]),describe(t2001$sp7_2[t2001$gr==1])); 
+rownames(a1)=c('1st group', '2nd group','2001-1st','2001-2nd')
+pander(a1, use.hyphening = TRUE, style='rmarkdown')
+```
+
+``` {r fig.height=10} 
+par(mfrow=c(2,2)) 
+par(mar=c(2.5, 2.5, 1.1, 1.5),bty="n")
+sm.density.compare(a$value, a$gr, xlab="degrees",col=c("brown", "green"))
+legend("topright", legend=c("1st group", "2nd group"),col=c("brown", "green"), lty=1:2, cex=0.5,box.lty=0)
+grid()
+abline(v=a1[1,1],col='brown')
+abline(v=a1[2,1],col='green')
+
+hist(a[,1],main='all trials')
+
+sm.density.compare(t2001$sp7_2, t2001$gr, xlab="degrees",col=c("brown", "green"))
+title(main='frame 2001')
+legend("topright", legend=c("1st group", "2nd group"),col=c("brown", "green"), lty=1:2, cex=0.5,box.lty=0)
+grid()
+abline(v=describe(t2001$sp7_2[t2001$gr==0])[1],col='brown')
+abline(v=describe(t2001$sp7_2[t2001$gr==1])[1],col='green')
+
+hist(t2001$sp7_2,main='all trials')
+
+```
+
+## Summary. Lateral tilt of the head 
+
+In the case of lateral deviations we would expect angles around zero with tilting to sides as an unbalanced reaction to a movement. On average head seems to be turned about 1.7 degrees to the right side in both groups. The range of sideward turns is about 10 degrees smaller than in upward and downward directions. 
+
+Similarly to the anterior angles, means of angles that are [grouped after the 11 sub-movements](#lH2) vary only about 0.8 degrees whereas mean variations for angles that are [grouped by the trial identities](#lH1) are about 2.7 degrees. If for all intervals the values of the students’ anterior angles were [consistently smaller](#pH2) than angles of the 2nd group than the median values of the students’ lateral angles are [larger](#lH2) in the 2nd, 5th, 6th, 7th and 8th sub-movements. 
+
+Furthermore, [individual time series](lH3) for the two time intervals with the symmetrical movements suggest a relation between changes in lateral orientation of the head and a direction of the stepping. Similarly to the anterior angles, these relations are highly individual and are difficult to generalise.
+
+<p class='p_caption'>Head, lateral tilting >> 11 sub-movements</p>
+``` {r }
+a=m_latH
+a1=describe(a[a$gr==0,1])
+a2=describe(a[a$gr==1,1])
+a1=rbind(a1,a2,describe(t2001$su7_2[t2001$gr==0]),describe(t2001$su7_2[t2001$gr==1]))
+rownames(a1)=c('1st group', '2nd group','2001-1st','2001-2nd')
+pander(a1, use.hyphening = TRUE, style='rmarkdown')
+```
+
+``` {r fig.height=10} 
+par(mfrow=c(2,2)) 
+par(mar=c(2.5, 2.5, 1.1, 1.5),bty="n")
+sm.density.compare(a$value, a$gr, xlab="degrees",col=c("brown", "green"))
+legend("topright", legend=c("1st group", "2nd group"),col=c("brown", "green"), lty=1:2, cex=0.5,box.lty=0)
+grid()
+abline(v=a1[1,1],col='brown')
+abline(v=a1[2,1],col='green')
+
+hist(a[,1],main='all trials')
+
+sm.density.compare(t2001$su7_2, t2001$gr, xlab="degrees",col=c("brown", "green"))
+title(main='frame 2001')
+legend("topright", legend=c("1st group", "2nd group"),col=c("brown", "green"), lty=1:2, cex=0.5,box.lty=0)
+grid()
+abline(v=describe(t2001$su7_2[t2001$gr==0])[1],col='brown')
+abline(v=describe(t2001$su7_2[t2001$gr==1])[1],col='green')
+
+hist(t2001$su7_2,main='all trials')
+```
+
+
+#### <a name="pH1"></a>Posterior-anterior tilt of the head, grouped by id-trials
+
+Below are boxplots of the elevation angles across different trials for the entire 2nd step of the Short Form. Brown color represents the 1st group and green the 2nd. Horizontal axes are given in degrees of the elevation angles so that positive values correspond to a head position that is turned upwards. The vertical axes represent grouping factor – identity of the trial.
+
+``` {r fig.height=10} 
+a=m_antH
+par(mar=c(2.5, 4.5, 1.1, 1.5))
+boxplot(value ~ Var1 , data = a,horizontal = TRUE, las=2, col = c2gr,cex.axis=.7 )
+grid()
+abline(v=mean(a$value[a$gr==0]),col='brown')
+abline(v=mean(a$value[a$gr==1]),col='green')
+```
+
+<p class='p_caption'>Head, anterior tilting >> 11 sub-movements</p>
+``` {r }
+a=m_antH
+a1=a[a$gr==0,]
+a1=droplevels(a1)
+a1=tapply(a1$value, a1$Var1, summary)
+a1=sapply(a1, "[", c("Mean"))
+a1=describe(a1)
+a2=a[a$gr==1,]
+a2=droplevels(a2)
+a2=tapply(a2$value, a2$Var1, summary)
+a2=sapply(a2, "[", c("Mean"))
+a2=describe(a2)
+a=rbind(a1,a2); rownames(a)=c('1st group', '2nd group')
+pander(a, use.hyphening = TRUE, style='rmarkdown')
+```
+
+Density plots of the angle values for the entire 2nd step (11 sub-movements) grouped by the trial identities. Brown color represents the 1st group and green the 2nd; vertical lines mark mean value of the corresponding trials; blue vertical lines mark the angle values in the beginning of the form.
+
+``` {r } 
+a=m_antH
+xl=c(min(a$value),max(a$value))
+yl=c(0,.5)
+par(mfrow=c(5,5)) 
+par(mar=c(2.1, 1.9, 1.1, 1.9))
+
+for(i in 1:length(names(anteriorH))){
+tN=names(anteriorH)[i]
+sm.density(a$value[a$Var1==tN], xlab="degrees", xlim=xl,ylim=yl, col=c2gr[i])
+title(main=tN)
+grid()
+abline(v=mean(a$value[a$Var1==tN]),col=c2gr[i])
+abline(v=t2001[tN,'sp7_2'],col='blue')
+}
+```
+
+#### <a name="lH1"></a>Lateral tilt of the head, grouped by id-trials
+
+Below are boxplots of the elevation angles across different trials for the entire 2nd step of the Short Form. Brown color represents the 1st group and green the 2nd. Horizontal axes are given in degrees of the elevation angles positive values correspond to a head tilted to the right side. The vertical axes represent grouping factor – identity of the trial.
+
+``` {r fig.height=10} 
+a=m_latH
+par(mar=c(2.5, 4.5, 1.1, 1.5))
+boxplot(value ~ Var1 , data = a,horizontal = TRUE, las=2, col = c2gr,cex.axis=.7 )
+grid()
+abline(v=mean(a$value[a$gr==0]),col='brown')
+abline(v=mean(a$value[a$gr==1]),col='green')
+```
+
+<p class='p_caption'>Head, lateral tilting >> 11 sub-movements</p>
+``` {r }
+a=m_latH
+a1=a[a$gr==0,]
+a1=droplevels(a1)
+a1=tapply(a1$value, a1$Var1, summary)
+a1=sapply(a1, "[", c("Mean"))
+a1=describe(a1)
+a2=a[a$gr==1,]
+a2=droplevels(a2)
+a2=tapply(a2$value, a2$Var1, summary)
+a2=sapply(a2, "[", c("Mean"))
+a2=describe(a2)
+a=rbind(a1,a2); rownames(a)=c('1st group', '2nd group')
+pander(a, use.hyphening = TRUE, style='rmarkdown')
+```
+
+Density plots of the angle values for the entire 2nd step (11 sub-movements) grouped by the trial identities. Brown color represents the 1st group and green the 2nd; vertical lines mark mean value of the corresponding trials; blue vertical lines mark the angle values in the beginning of the form.
+
+``` {r } 
+a=m_latH
+xl=c(min(a$value),max(a$value))
+yl=c(0,.5)
+par(mfrow=c(5,5)) 
+par(mar=c(2.1, 1.9, 1.1, 1.9))
+
+for(i in 1:length(names(anteriorH))){
+tN=names(anteriorH)[i]
+sm.density(a$value[a$Var1==tN], xlab="degrees", xlim=xl,ylim=yl, col=c2gr[i])
+title(main=tN)
+grid()
+abline(v=mean(a$value[a$Var1==tN]),col=c2gr[i])
+abline(v=t2001[tN,'su7_2'],col='blue')
+}
+```
+
+#### <a name="pH2"></a>Posterior-anterior tilt of the head, grouped by sub-movements
+
+Also we can look at differences in the angles across the 11 sub-movements without differentiating between individual trials. Again, the brown color represents the 1st group and green the 2nd. Horizontal axes are given in degrees of the elevation angles and the vertical axes represent grouping factor – a number of the sub-movement.
+
+```{r fig.height=10}
+a=m_antH
+par(mar=c(2.5, 4.5, 1.1, 1.5))
+boxplot(value~L1, data = a, subset=(a$gr==0), horizontal=T,las=2,col=rgb(1,.3,.5, alpha=0.3),medcol="red",add=F, notch=TRUE, varwidth=T,cex.axis=.7)
+boxplot(value~L1, data = a, subset=(a$gr==1), horizontal=T,las=2,col=rgb(.5,1,.3, alpha=0.6), medcol="green",add=T, varwidth=T,cex.axis=.7)
+grid()
+a1=mean(sapply(X=unique(a$L1),FUN = function(X,aa){mean(aa$value[aa$gr==0 & aa$L1==X])},aa=a))
+a2=mean(sapply(X=unique(a$L1),FUN = function(X,aa){mean(aa$value[aa$gr==1 & aa$L1==X])},aa=a))
+abline(v=a1,col='brown')
+abline(v=a2,col='green')
+```
+
+<p class='p_caption'>Head, anterior tilting >> 11 sub-movements</p>
+```{r }
+a=m_antH
+a1=a[a$gr==0,]
+a1=droplevels(a1)
+a1=tapply(a1$value, a1$L1, summary)
+a1=sapply(a1, "[", c("Mean"))
+a1=describe(a1)
+
+a2=a[a$gr==1,]
+a2=droplevels(a2)
+a2=tapply(a2$value, a2$L1, summary)
+a2=sapply(a2, "[", c("Mean"))
+a2=describe(a2)
+a=rbind(a1,a2); rownames(a)=c('1st group', '2nd group')
+pander(a, use.hyphening = TRUE, style='rmarkdown')
+```
+
+Density plots of the angle values grouped by the 11 sub-movements. Brown color represents the 1st group and green the 2nd; vertical lines mark mean value of the corresponding sub-movement for 1st and 2nd group. The 2nd and 3rd rows capture a symmetrical motion sequence: from the left into right bow stance and from the right into left.
+
+``` {r fig.height=10} 
+a=m_antH
+xl=c(min(a$value),max(a$value))
+yl=c(0,.5)
+par(mar=c(2.1, 1.9, 1.1, 1.9))
+par(mfrow=c(3,4)) 
+i=1
+for(ii in 1:(length(unique(a$L1))+1)){
+  if(ii==1)plot(1, type="n", axes=F, xlab="", ylab="")
+  else{
+tN=unique(a$L1)[i]
+sm.density.compare(a$value[a$L1==tN], a$gr[a$L1==tN], xlab="degrees", xlim=xl,ylim=yl, col=c('brown','green'))
+title(main=tN)
+grid()
+abline(v=mean(a$value[a$L1==tN & a$gr==0]),col='brown')
+abline(v=mean(a$value[a$L1==tN & a$gr==1]),col='green')
+i=i+1
+}
+}
+```
+
+#### <a name="lH2"></a>Lateral tilt of the head, grouped by sub-movements
+
+Also we can look at differences in the angles across the 11 sub-movements without differentiating between individual trials. Again, the brown color represents the 1st group and green the 2nd. Horizontal axes are given in degrees of the elevation angles and the vertical axes represent grouping factor – a number of the sub-movement.
+
+```{r fig.height=10}
+a=m_latH
+par(mar=c(2.5, 4.5, 1.1, 1.5))
+boxplot(value~L1, data = a, subset=(a$gr==0), horizontal=T,las=2,col=rgb(1,.3,.5, alpha=0.3),medcol="red",add=F, notch=TRUE, varwidth=T,cex.axis=.7)
+boxplot(value~L1, data = a, subset=(a$gr==1), horizontal=T,las=2,col=rgb(.5,1,.3, alpha=0.6), medcol="green", add=T, varwidth=T,cex.axis=.7)
+grid()
+a1=mean(sapply(X=unique(a$L1),FUN = function(X,aa){mean(aa$value[aa$gr==0 & aa$L1==X])},aa=a))
+a2=mean(sapply(X=unique(a$L1),FUN = function(X,aa){mean(aa$value[aa$gr==1 & aa$L1==X])},aa=a))
+abline(v=a1,col='brown')
+abline(v=a2,col='green')
+```
+
+<p class='p_caption'>Head, lateral tilting >> 11 sub-movements</p>
+```{r }
+a=m_latH
+a1=a[a$gr==0,]
+a1=droplevels(a1)
+a1=tapply(a1$value, a1$L1, summary)
+a1=sapply(a1, "[", c("Mean"))
+a1=describe(a1)
+
+a2=a[a$gr==1,]
+a2=droplevels(a2)
+a2=tapply(a2$value, a2$L1, summary)
+a2=sapply(a2, "[", c("Mean"))
+a2=describe(a2)
+a=rbind(a1,a2); rownames(a)=c('1st group', '2nd group')
+pander(a, use.hyphening = TRUE, style='rmarkdown')
+```
+
+Density plots of the angle values grouped by the 11 sub-movements. Brown color represents the 1st group and green the 2nd; vertical lines mark mean value of the corresponding sub-movement for 1st and 2nd group. The 2nd and 3rd rows capture a symmetrical motion sequence: from the left into right bow stance and from the right into left.
+
+``` {r fig.height=10} 
+a=m_latH
+xl=c(min(a$value),max(a$value))
+yl=c(0,.5)
+par(mar=c(2.1, 1.9, 1.1, 1.9))
+par(mfrow=c(3,4)) 
+i=1
+for(ii in 1:(length(unique(a$L1))+1)){
+  if(ii==1)plot(1, type="n", axes=F, xlab="", ylab="")
+  else{
+tN=unique(a$L1)[i]
+sm.density.compare(a$value[a$L1==tN], a$gr[a$L1==tN], xlab="degrees", xlim=xl,ylim=yl, col=c('brown','green'))
+title(main=tN)
+grid()
+abline(v=mean(a$value[a$L1==tN & a$gr==0]),col='brown')
+abline(v=mean(a$value[a$L1==tN & a$gr==1]),col='green')
+i=i+1
+}
+}
+```
+
+#### <a name="pH3"></a>Posterior-anterior tilt of the head, grouped by id-trials and sub-movements
+
+Below are boxplots for two intervals of the 2nd step that capture symmetrical body motion: from the left to right bow stance and from the right to left bow stance. The boxplots of these intervals are superimposed for each of the trials. The **1st interval is marked by green** color and the **2nd by red** (color is not associated with groups). These boxplots suggest that the angle values for the two intervals don't reflect the symmetry of the actual movement.
+
+``` {r fig.height=10} 
+a1=cbind(qa[['m_4']][,1],qa[['m_7']][,2])
+a2=cbind(qa[['m_8']][,1],qa[['m_11']][,2])
+a1=list(m_4_7=a1,m_8_11=a2)
+ant_2bow=f_getSubMove(a=anteriorH, qa=a1)
+ant_2bow=melt(ant_2bow)
+
+m_s_2bow=ant_2bow
+
+par(mar=c(2.5, 4.5, 1.1, 1.5))
+boxplot(value~L2, data=m_s_2bow, subset=L1=='m_4_7', horizontal=T,las=2,col=rgb(.5,1,.3, alpha=0.6), medcol="green", varwidth=T,cex.axis=.7)
+boxplot(value~L2, data=m_s_2bow, subset=L1=='m_8_11', horizontal=T,las=2,col=rgb(1,.3,.5, alpha=0.3),medcol="red",add=T, notch=TRUE, varwidth=T,cex.axis=.7)
+grid()
+
+abline(v=mean(m_s_2bow$value[m_s_2bow$L1=='m_4_7']),col=rgb(.5,1,.3, alpha=0.8))
+abline(v=mean(m_s_2bow$value[m_s_2bow$L1=='m_8_11']),col=rgb(1,.3,.5, alpha=0.8))
+```
+
+Also, we can differentiate between the different sub-movements within the two intervals and look at them individually. Below are two columns of the boxplots with 4 rows that represent consecutive phases of our two intervals. The 1st column represents the movement from the left to right bow stance (4th - 7th sub-movements), the 2nd column represents the movement from the right to left bow stance (8th - 11th sub-movements). We can notice that differences within the same trial are larger across the rows than across the columns. In other words, time intervals that mark movements that are physically different show a larger impact on the angle values than time intervals with similar movements.
+
+```{r fig.height=23}
+#print boxplot of trial's mean-values for each sub-movement
+par(mfrow=c(4,2)) 
+par(mar=c(4.5, 4.5, 0.5, 1.5))
+a=m_antH
+b=antH
+xl=c(min(a$value),max(a$value))#c(-5,25)
+#boxplot for mean-values of all sub-movements for each trial
+boxplot(value ~ L1 , data = melt(b[['m_4']]), horizontal = TRUE, las=2, col = c2gr, ylim=xl )
+grid()
+abline(v=mean(a$value[a$gr==0 & a$L1=='m_4']),col='brown')
+abline(v=mean(a$value[a$gr==1 & a$L1=='m_4']),col='green')
+
+boxplot(value ~ L1 , data = melt(b[['m_8']]), horizontal = TRUE, las=2, col = c2gr, ylim=xl )
+grid()
+abline(v=mean(a$value[a$gr==0 & a$L1=='m_8']),col='brown')
+abline(v=mean(a$value[a$gr==1 & a$L1=='m_8']),col='green')
+
+boxplot(value ~ L1 , data = melt(b[['m_5']]), horizontal = TRUE, las=2, col = c2gr, ylim=xl )
+grid()
+abline(v=mean(a$value[a$gr==0 & a$L1=='m_5']),col='brown')
+abline(v=mean(a$value[a$gr==1 & a$L1=='m_5']),col='green')
+
+boxplot(value ~ L1 , data = melt(b[['m_9']]), horizontal = TRUE, las=2, col = c2gr, ylim=xl )
+grid()
+abline(v=mean(a$value[a$gr==0 & a$L1=='m_9']),col='brown')
+abline(v=mean(a$value[a$gr==1 & a$L1=='m_9']),col='green')
+
+boxplot(value ~ L1 , data = melt(b[['m_6']]), horizontal = TRUE, las=2, col = c2gr , ylim=xl)
+grid()
+abline(v=mean(a$value[a$gr==0 & a$L1=='m_6']),col='brown')
+abline(v=mean(a$value[a$gr==1 & a$L1=='m_6']),col='green')
+
+boxplot(value ~ L1 , data = melt(b[['m_10']]), horizontal = TRUE, las=2, col = c2gr, ylim=xl )
+grid()
+abline(v=mean(a$value[a$gr==0 & a$L1=='m_10']),col='brown')
+abline(v=mean(a$value[a$gr==1 & a$L1=='m_10']),col='green')
+
+boxplot(value ~ L1 , data = melt(b[['m_7']]), horizontal = TRUE, las=2, col = c2gr , ylim=xl)
+grid()
+abline(v=mean(a$value[a$gr==0 & a$L1=='m_7']),col='brown')
+abline(v=mean(a$value[a$gr==1 & a$L1=='m_7']),col='green')
+
+boxplot(value ~ L1 , data = melt(b[['m_11']]), horizontal = TRUE, las=2, col = c2gr , ylim=xl)
+grid()
+abline(v=mean(a$value[a$gr==0 & a$L1=='m_11']),col='brown')
+abline(v=mean(a$value[a$gr==1 & a$L1=='m_11']),col='green')
+```
+
+Furthermore we can compare the actual time series for the two intervals. The figure below shows 25 plots for each of the trials with the red color marking the 1st interval and green the 2nd. Vertical lines show boundaries for the four sub-movements within each interval, horizontal lines show means and a blue horizontal line marks the angle value in the 1st frame of the entire performance than a person is in a straight position. Horizontal axis is given in frames with sampling frequency 120 frames per second. Green is for the 1st interval (4-7th sub-movements; left to right bow stance); Red is for the 2nd interval (8-11th sub-movements; right to left bow stance).
+
+We can notice a clear correlation between the two intervals for some trials (e.g. ‘id_101’, ‘id_204’). In trials like ‘id_205’, ‘id_115’ or ‘id_201’ a timing of sub-movements within intervals is not matching but time series are nonetheless correlated. Similarly, we can see that there are few trials (e.g. ‘id_103’, ‘id_114’, ‘id_204’) with a clear shift in the means of the intervals that might reperesent a left/right bias of an individual. It seems that for the most of the trials, anterior deviations of the head reflect the movement phases but these variations are highly individual.
+
+```{r }
+#cor.test(b1[b1$Var1=='id_101',3],b2[b1$Var1=='id_101',3])
+m_s_2bow=ant_2bow
+
+tdo=as.data.frame(m_s_2bow)
+yl=c(min(tdo$value),max(tdo$value))
+xl=c(0,1700)
+par(mfrow=c(5,5)) 
+par(mar=c(2.1, 1.9, 1.1, 1.9))
+for(i in 1:length(names(anteriorH))){
+tN=names(anteriorH)[i]
+
+plot(tdo$value[tdo$L2==tN & tdo$L1=='m_4_7'],
+     col=rgb(1,.5,.3, alpha=1),type='l',
+     xlim=xl,ylim=yl,xaxt="n", main=tN, xlab ='', ylab ='')
+points(tdo$value[tdo$L2==tN & tdo$L1=='m_8_11'],col=rgb(.5,1,.3, alpha=1),type='l')
+axis(side=1, at=seq(xl[1], xl[2], by=120))
+abline(h=0)
+abline(h=mean(tdo$value[tdo$L2==tN & tdo$L1=='m_4_7']),col=rgb(1,.5,.3, alpha=0.8))
+abline(h=mean(tdo$value[tdo$L2==tN & tdo$L1=='m_8_11']),col=rgb(.5,1,.3, alpha=0.8))
+
+abline(v=qa[['m_4']][tN,2]-qa[['m_4']][tN,1],col=rgb(1,.5,.3, alpha=0.6))
+abline(v=qa[['m_8']][tN,2]-qa[['m_8']][tN,1],col=rgb(.5,1,.3, alpha=0.6))
+abline(v=qa[['m_5']][tN,2]-qa[['m_4']][tN,1],col=rgb(1,.5,.3, alpha=0.6))
+abline(v=qa[['m_9']][tN,2]-qa[['m_8']][tN,1],col=rgb(.5,1,.3, alpha=0.6))
+abline(v=qa[['m_6']][tN,2]-qa[['m_4']][tN,1],col=rgb(1,.5,.3, alpha=0.6))
+abline(v=qa[['m_10']][tN,2]-qa[['m_8']][tN,1],col=rgb(.5,1,.3, alpha=0.6))
+
+k=which(allEvent[[tN]]==2001)# 2001start of SF WuJi
+abline(h=allAngl[[tN]][k,'sp7_2']*180/pi, col='blue')
+}
+```
+
+#### <a name="lH3"></a>Lateral tilt of the head, grouped by id-trials and sub-movements
+
+Below are boxplots for two intervals of the 2nd step that capture symmetrical body motion: from the left to right bow stance and from the right to left bow stance. The boxplots of these intervals are superimposed for each of the trials. The **1st interval is marked by green** color and the **2nd by red** (color is not associated with groups).
+
+``` {r fig.height=10} 
+a1=cbind(qa[['m_4']][,1],qa[['m_7']][,2])
+a2=cbind(qa[['m_8']][,1],qa[['m_11']][,2])
+a1=list(m_4_7=a1,m_8_11=a2)
+lat_2bow=f_getSubMove(a=lateralH, qa=a1)
+lat_2bow=melt(lat_2bow)
+m_s_2bow=lat_2bow
+
+par(mar=c(2.5, 4.5, 1.1, 1.5))
+boxplot(value~L2, data=m_s_2bow, subset=L1=='m_4_7', horizontal=T,las=2,col=rgb(.5,1,.3, alpha=0.6), medcol="green", varwidth=T,cex.axis=.7)
+boxplot(value~L2, data=m_s_2bow, subset=L1=='m_8_11', horizontal=T,las=2,col=rgb(1,.3,.5, alpha=0.3),medcol="red",add=T, notch=TRUE, varwidth=T,cex.axis=.7)
+grid()
+
+abline(v=mean(m_s_2bow$value[m_s_2bow$L1=='m_4_7']),col=rgb(.5,1,.3, alpha=0.8))
+abline(v=mean(m_s_2bow$value[m_s_2bow$L1=='m_8_11']),col=rgb(1,.3,.5, alpha=0.8))
+```
+
+Below are two columns of the boxplots with 4 rows that represent consecutive phases of our two intervals. The 1st column represents the movement from the left to right bow stance (4th - 7th sub-movements), the 2nd column represents the movement from the right to left bow stance (8th - 11th sub-movements). 
+
+```{r fig.height=23}
+#print boxplot of trial's mean-values for each sub-movement
+par(mfrow=c(4,2)) 
+par(mar=c(4.5, 4.5, 0.5, 1.5))
+a=m_latH
+b=latH
+xl=c(min(a$value),max(a$value))#c(-10,10)
+#boxplot for mean-values of all sub-movements for each trial
+boxplot(value ~ L1 , data = melt(b[['m_4']]), horizontal = TRUE, las=2, col = c2gr , ylim=xl)
+grid()
+abline(v=mean(a$value[a$gr==0 & a$L1=='m_4']),col='brown')
+abline(v=mean(a$value[a$gr==1 & a$L1=='m_4']),col='green')
+
+boxplot(value ~ L1 , data = melt(b[['m_8']]), horizontal = TRUE, las=2, col = c2gr , ylim=xl)
+grid()
+abline(v=mean(a$value[a$gr==0 & a$L1=='m_8']),col='brown')
+abline(v=mean(a$value[a$gr==1 & a$L1=='m_8']),col='green')
+
+boxplot(value ~ L1 , data = melt(b[['m_5']]), horizontal = TRUE, las=2, col = c2gr, ylim=xl )
+grid()
+abline(v=mean(a$value[a$gr==0 & a$L1=='m_5']),col='brown')
+abline(v=mean(a$value[a$gr==1 & a$L1=='m_5']),col='green')
+
+boxplot(value ~ L1 , data = melt(b[['m_9']]), horizontal = TRUE, las=2, col = c2gr , ylim=xl)
+grid()
+abline(v=mean(a$value[a$gr==0 & a$L1=='m_9']),col='brown')
+abline(v=mean(a$value[a$gr==1 & a$L1=='m_9']),col='green')
+
+boxplot(value ~ L1 , data = melt(b[['m_6']]), horizontal = TRUE, las=2, col = c2gr , ylim=xl)
+grid()
+abline(v=mean(a$value[a$gr==0 & a$L1=='m_6']),col='brown')
+abline(v=mean(a$value[a$gr==1 & a$L1=='m_6']),col='green')
+
+boxplot(value ~ L1 , data = melt(b[['m_10']]), horizontal = TRUE, las=2, col = c2gr , ylim=xl)
+grid()
+abline(v=mean(a$value[a$gr==0 & a$L1=='m_10']),col='brown')
+abline(v=mean(a$value[a$gr==1 & a$L1=='m_10']),col='green')
+
+boxplot(value ~ L1 , data = melt(b[['m_7']]), horizontal = TRUE, las=2, col = c2gr , ylim=xl)
+grid()
+abline(v=mean(a$value[a$gr==0 & a$L1=='m_7']),col='brown')
+abline(v=mean(a$value[a$gr==1 & a$L1=='m_7']),col='green')
+
+boxplot(value ~ L1 , data = melt(b[['m_11']]), horizontal = TRUE, las=2, col = c2gr , ylim=xl)
+grid()
+abline(v=mean(a$value[a$gr==0 & a$L1=='m_11']),col='brown')
+abline(v=mean(a$value[a$gr==1 & a$L1=='m_11']),col='green')
+```
+
+Furthermore we can compare the actual time series for the two intervals. The figure below shows 25 plots for each of the trials with the red color marking the 1st interval and green the 2nd. Vertical lines show boundaries for the four sub-movements within each interval, horizontal lines show means and a blue horizontal line marks the angle value in the 1st frame of the entire performance than a person is in a straight position. Horizontal axis is given in frames with sampling frequency 120 frames per second. Green is for the 1st interval (4-7th sub-movements; left to right bow stance); Red is for the 2nd interval (8-11th sub-movements; right to left bow stance).
+
+In some trials like ‘id_105’, ‘id_111’, ‘id_202’ or ‘id_211’ changes of the red lines are mirrored around the horizontal mean lines by the green line. In other words, if we take mean value as a ‘normal’ orientation than for some people stepping from the left to right (red lines) and from the right to left bow stance (green lines) can be associated with a tilting of the head relative to their ‘normal vertical’. 
+
+For example, in the trial ‘id_111’, in the 4th sub-movement the head is straight and around 4 degrees turned leftwards relative to horizontal mean lines; in the 5th sub-movement (roll back to the right) the angle approaches the ‘normal’ value and so the head is tilting to the right; in the 6th sub-movement that includes a mid swing stance of the right foot the head continues to turn rightwards but angle increases beyond the horizontal mean line and thus the head is tilted rightwards relative to the mean. Similarly the 2nd interval that is represented by the green line follows the movement and shows a mirrored relation to the angle changes in the 1st interval.
+
+
+```{r }
+#cor.test(b1[b1$Var1=='id_101',3],b2[b1$Var1=='id_101',3])
+m_s_2bow=lat_2bow
+
+tdo=as.data.frame(m_s_2bow)
+
+yl=c(min(tdo$value),max(tdo$value))
+xl=c(0,1700)
+par(mfrow=c(5,5)) 
+par(mar=c(2.1, 1.9, 1.1, 1.9))
+for(i in 1:length(names(anteriorH))){
+tN=names(anteriorH)[i]
+
+plot(tdo$value[tdo$L2==tN & tdo$L1=='m_4_7'],
+     col=rgb(1,.5,.3, alpha=1),type='l',
+     xlim=xl,ylim=yl,xaxt="n", main=tN, xlab ='', ylab ='')
+points(tdo$value[tdo$L2==tN & tdo$L1=='m_8_11'],col=rgb(.5,1,.3, alpha=1),type='l')
+axis(side=1, at=seq(xl[1], xl[2], by=120))
+abline(h=0)
+abline(h=mean(tdo$value[tdo$L2==tN & tdo$L1=='m_4_7']),col=rgb(1,.5,.3, alpha=0.8))
+abline(h=mean(tdo$value[tdo$L2==tN & tdo$L1=='m_8_11']),col=rgb(.5,1,.3, alpha=0.8))
+
+abline(v=qa[['m_4']][tN,2]-qa[['m_4']][tN,1],col=rgb(1,.5,.3, alpha=0.6))
+abline(v=qa[['m_8']][tN,2]-qa[['m_8']][tN,1],col=rgb(.5,1,.3, alpha=0.6))
+abline(v=qa[['m_5']][tN,2]-qa[['m_4']][tN,1],col=rgb(1,.5,.3, alpha=0.6))
+abline(v=qa[['m_9']][tN,2]-qa[['m_8']][tN,1],col=rgb(.5,1,.3, alpha=0.6))
+abline(v=qa[['m_6']][tN,2]-qa[['m_4']][tN,1],col=rgb(1,.5,.3, alpha=0.6))
+abline(v=qa[['m_10']][tN,2]-qa[['m_8']][tN,1],col=rgb(.5,1,.3, alpha=0.6))
+
+k=which(allEvent[[tN]]==2001)# 2001start of SF WuJi
+abline(h=allAngl[[tN]][k,'su7_2']*180/pi, col='blue')
+
+}
+```
+
