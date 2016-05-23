@@ -2,7 +2,6 @@
 Title: Movement of the Clavicles relative to the vertical Orientation of the Ribcage
 Category: Summary Stats
 Tags: summary posture, lateral tilting, vertical, clavicles, upper body, arms
-Slug: movement-of-the-clavicles-relative-to-the-vertical-orientation-of-the-ribcage
 Authors: Nicolek
 Summary:  Summary statistics for the vertical motion of the clavicles during the 2nd step of the Tai Chi Short Form
 Series: Arms

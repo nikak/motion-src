@@ -1,9 +1,7 @@
 ---
 Title: Relative Movement of the Upper Arms relative to the vertical Orientation of the Ribcage
 Category: Summary Stats
-Menulabel: Posture
 Tags: summary posture, lateral tilting, vertical, upper arms, upper body, arms
-Slug: relative-movement-of-the-upper-arms-to-the-vertical-orientation-of-the-ribcage
 Authors: Nicolek
 Summary:  Summary statistics for the vertical motion of the upper arms during the 2nd step of the Tai Chi Short Form
 Series: Arms

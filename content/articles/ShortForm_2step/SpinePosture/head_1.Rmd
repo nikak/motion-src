@@ -1,7 +1,7 @@
 ---
 Title: Lateral and anterior Movement of the Head
 Category: Summary Stats
-Tags: summary posture, lateral tilting, anterior tilting, central, head
+Tags: summary posture, lateral tilting, anterior tilting, central, vertical, head
 Authors: Nicolek
 Summary:  Summary statistics for tilting of the head during the 2nd step of the Tai Chi Short Form
 Series: Head and Neck

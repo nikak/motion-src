@@ -1,7 +1,7 @@
 ---
 Title: Movement of the Ribcage and Pelvis relative to the vertical Direction
 Category: Summary Stats
-Tags: summary posture, lateral tilting, anterior tilting, central, spine
+Tags: summary posture, lateral tilting, anterior tilting, vertical, ribcage, pelvis, central, spine
 Authors: Nicolek
 Summary:  Summary statistics for the vertical motion of the ribcage and pelvis during the 2nd step of the Tai Chi Short Form
 Series: Spine

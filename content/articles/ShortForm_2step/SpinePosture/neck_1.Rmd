@@ -1,7 +1,7 @@
 ---
 Title: Lateral and anterior Movement of the Neck
 Category: Summary Stats
-Tags: summary posture, lateral tilting, anterior tilting, central, neck
+Tags: summary posture, lateral tilting, anterior tilting, central, vertical, neck
 Authors: Nicolek
 Summary:  Summary statistics for the neck motion duiring the 2nd step of the Tai Chi Short Form
 Series: Head and Neck

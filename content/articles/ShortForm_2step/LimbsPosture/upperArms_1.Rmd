@@ -1,8 +1,7 @@
 ---
 Title: Relative Movement of the Upper Arms in the horisontal Plane
 Category: Summary Stats
-Tags: summary posture, left and right turning, upper arms, upper body, arms
-Slug: relative-movement-of-the-upper-arms-in-the-horisontal-plane
+Tags: summary posture, left and right turning, horisontal, upper arms, upper body, arms
 Authors: Nicolek
 Summary:  Summary statistics for the motion of the upper arms in the horisontal plane during the 2nd step of the Tai Chi Short Form
 Series: Arms

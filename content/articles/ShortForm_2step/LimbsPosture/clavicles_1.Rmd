@@ -1,7 +1,7 @@
 ---
 Title: Relative Movement of the Clavicles in the horisontal Plane
 Category: Summary Stats
-Tags: summary posture, left and right turning, clavicles, upper body, arms
+Tags: summary posture, left and right turning, horisontal, clavicles, upper body, arms
 Authors: Nicolek
 Summary:  Summary statistics for the motion of the clavicles in the horisontal plane during the 2nd step of the Tai Chi Short Form
 Series: Arms

@@ -1,7 +1,7 @@
 ---
 Title: Lateral and anterior Changes in the thoracic and lumbar Areas of the Spine
 Category: Summary Stats
-Tags: summary posture, lateral tilting, anterior tilting, central, spine
+Tags: summary posture, lateral tilting, anterior tilting, central, vertical, spine
 Authors: Nicolek
 Summary:  Summary statistics for the thoracic and lumbar curves during the 2nd step of the Tai Chi Short Form
 Series: Spine
